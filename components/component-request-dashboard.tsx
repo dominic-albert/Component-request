@@ -650,10 +650,16 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                     <SelectTrigger className="w-20 px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm [&>span]:text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="30">30</SelectItem>
+                    <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl [&_*]:text-white">
+                      <SelectItem value="10" className="text-white hover:bg-white/10 focus:bg-white/10">
+                        10
+                      </SelectItem>
+                      <SelectItem value="20" className="text-white hover:bg-white/10 focus:bg-white/10">
+                        20
+                      </SelectItem>
+                      <SelectItem value="30" className="text-white hover:bg-white/10 focus:bg-white/10">
+                        30
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
