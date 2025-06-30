@@ -957,12 +957,22 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                     <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1 [&>span]:text-white">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
-                      <SelectItem value="Form">Form</SelectItem>
-                      <SelectItem value="Navigation">Navigation</SelectItem>
-                      <SelectItem value="Display">Display</SelectItem>
-                      <SelectItem value="Input">Input</SelectItem>
-                      <SelectItem value="Layout">Layout</SelectItem>
+                    <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl text-white">
+                      <SelectItem value="Form" className="text-white hover:bg-white/10 focus:bg-white/10">
+                        Form
+                      </SelectItem>
+                      <SelectItem value="Navigation" className="text-white hover:bg-white/10 focus:bg-white/10">
+                        Navigation
+                      </SelectItem>
+                      <SelectItem value="Display" className="text-white hover:bg-white/10 focus:bg-white/10">
+                        Display
+                      </SelectItem>
+                      <SelectItem value="Input" className="text-white hover:bg-white/10 focus:bg-white/10">
+                        Input
+                      </SelectItem>
+                      <SelectItem value="Layout" className="text-white hover:bg-white/10 focus:bg-white/10">
+                        Layout
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -977,11 +987,19 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                     <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1 [&>span]:text-white">
                       <SelectValue placeholder="Select priority level" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
-                      <SelectItem value="Low">Low</SelectItem>
-                      <SelectItem value="Medium">Medium</SelectItem>
-                      <SelectItem value="High">High</SelectItem>
-                      <SelectItem value="Urgent">Urgent</SelectItem>
+                    <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl text-white">
+                      <SelectItem value="Low" className="text-white hover:bg-white/10 focus:bg-white/10">
+                        Low
+                      </SelectItem>
+                      <SelectItem value="Medium" className="text-white hover:bg-white/10 focus:bg-white/10">
+                        Medium
+                      </SelectItem>
+                      <SelectItem value="High" className="text-white hover:bg-white/10 focus:bg-white/10">
+                        High
+                      </SelectItem>
+                      <SelectItem value="Urgent" className="text-white hover:bg-white/10 focus:bg-white/10">
+                        Urgent
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
