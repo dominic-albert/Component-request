@@ -343,33 +343,31 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-500/10">
-            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <h3 className="text-sm font-medium text-slate-300">Total requests</h3>
-            </div>
-            <div className="text-2xl font-semibold text-white">{statusCounts.total}</div>
+        <div className="flex gap-3 overflow-x-auto">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-3 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-500/10 min-w-[120px] flex-shrink-0">
+            <div className="text-xs font-medium text-slate-300 mb-1">Total requests</div>
+            <div className="text-xl font-semibold text-white">{statusCounts.total}</div>
           </div>
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-500/10">
-            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <h3 className="text-sm font-medium text-slate-300">Pending</h3>
-              <AlertCircle className="h-5 w-5 text-gray-400" />
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-3 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-500/10 min-w-[120px] flex-shrink-0">
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-xs font-medium text-slate-300">Pending</div>
+              <AlertCircle className="h-3 w-3 text-gray-400" />
             </div>
-            <div className="text-2xl font-semibold text-white">{statusCounts.pending}</div>
+            <div className="text-xl font-semibold text-white">{statusCounts.pending}</div>
           </div>
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-500/10">
-            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <h3 className="text-sm font-medium text-slate-300">In progress</h3>
-              <Clock className="h-5 w-5 text-blue-400" />
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-3 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-500/10 min-w-[120px] flex-shrink-0">
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-xs font-medium text-slate-300">In progress</div>
+              <Clock className="h-3 w-3 text-blue-400" />
             </div>
-            <div className="text-2xl font-semibold text-white">{statusCounts.inProgress}</div>
+            <div className="text-xl font-semibold text-white">{statusCounts.inProgress}</div>
           </div>
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-500/10">
-            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <h3 className="text-sm font-medium text-slate-300">Completed</h3>
-              <CheckCircle className="h-5 w-5 text-green-400" />
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-3 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-500/10 min-w-[120px] flex-shrink-0">
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-xs font-medium text-slate-300">Completed</div>
+              <CheckCircle className="h-3 w-3 text-green-400" />
             </div>
-            <div className="text-2xl font-semibold text-white">{statusCounts.completed}</div>
+            <div className="text-xl font-semibold text-white">{statusCounts.completed}</div>
           </div>
         </div>
 
