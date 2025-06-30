@@ -389,7 +389,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
               <Table>
                 <TableHeader>
                   <TableRow className="border-b border-white/10 bg-white/5">
-                    <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                    <TableHead className="px-6 py-4 text-left text-xs text-slate-300 uppercase tracking-wider font-semibold">
                       Component name
                     </TableHead>
                     <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
