@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-import { Clock, CheckCircle, XCircle, AlertCircle, Plus, Eye, LogOut, User, Edit, Trash2 } from "lucide-react"
+import { Clock, CheckCircle, AlertCircle, Plus, Eye, LogOut, User, Edit, Trash2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,9 +40,9 @@ interface ComponentRequestDashboardProps {
 const mockRequests = [
   {
     id: "1",
-    requestName: "SocialProfileCard",
+    requestName: "Advanced Data Table",
     justification:
-      "This card will be reused across the user dashboard and public profile pages. It has several states: default, hover, and loading.",
+      "Need a sophisticated data table component with sorting, filtering, pagination, and row selection capabilities for the analytics dashboard.",
     requesterId: "designer_user_123",
     requesterName: "Sarah Chen",
     requesterEmail: "sarah.chen@company.com",
@@ -56,18 +56,19 @@ const mockRequests = [
       thumbnailUrl: "/placeholder.svg?height=200&width=300",
     },
     project: "CATT",
-    severity: "Medium",
-    figmaLink: "https://figma.com/file/abc123/social-profile-card",
+    severity: "High",
+    category: "Display",
+    figmaLink: "https://figma.com/file/abc123/advanced-data-table",
   },
   {
     id: "2",
-    requestName: "PrimaryButton-WithIcon",
+    requestName: "Multi-step Form Wizard",
     justification:
-      "Need a primary button variant that includes an icon for call-to-action sections. Current button component doesn't support icons.",
+      "Complex onboarding flow requires a multi-step form component with progress indicators, validation, and step navigation.",
     requesterId: "designer_user_456",
     requesterName: "Mike Rodriguez",
     requesterEmail: "mike.rodriguez@company.com",
-    status: "InProgress",
+    status: "In Progress",
     denialReason: "",
     requestedAt: "2024-10-25T14:30:00Z",
     updatedAt: "2024-10-26T09:15:00Z",
@@ -77,18 +78,19 @@ const mockRequests = [
       thumbnailUrl: "/placeholder.svg?height=200&width=300",
     },
     project: "PTP",
-    severity: "High",
-    figmaLink: "https://figma.com/file/def456/primary-button-icon",
+    severity: "Medium",
+    category: "Form",
+    figmaLink: "https://figma.com/file/def456/multi-step-form",
   },
   {
     id: "3",
-    requestName: "DataVisualizationChart",
+    requestName: "Interactive Dashboard Cards",
     justification:
-      "Complex chart component for analytics dashboard. Needs to support multiple chart types and interactive features.",
+      "Executive dashboard needs interactive cards with real-time data updates, hover effects, and drill-down capabilities.",
     requesterId: "designer_user_789",
     requesterName: "Emma Thompson",
     requesterEmail: "emma.thompson@company.com",
-    status: "Done",
+    status: "Completed",
     denialReason: "",
     requestedAt: "2024-10-20T11:00:00Z",
     updatedAt: "2024-10-25T16:45:00Z",
@@ -98,19 +100,19 @@ const mockRequests = [
       thumbnailUrl: "/placeholder.svg?height=200&width=300",
     },
     project: "FX",
-    severity: "Low",
+    severity: "Urgent",
+    category: "Display",
     figmaLink: "",
   },
   {
     id: "4",
-    requestName: "CustomTooltip",
-    justification: "Need a custom tooltip that matches our design system. Current tooltip is too basic.",
+    requestName: "Navigation Breadcrumbs",
+    justification: "Need a breadcrumb navigation component for better user orientation in deep page hierarchies.",
     requesterId: "designer_user_101",
     requesterName: "Alex Kim",
     requesterEmail: "alex.kim@company.com",
-    status: "Denied",
-    denialReason:
-      "This functionality already exists in the 'InfoPopover' component. Please use that instead and refer to the design system documentation.",
+    status: "Pending",
+    denialReason: "",
     requestedAt: "2024-10-24T09:20:00Z",
     updatedAt: "2024-10-25T10:30:00Z",
     frameData: {
@@ -119,7 +121,8 @@ const mockRequests = [
       thumbnailUrl: "/placeholder.svg?height=200&width=300",
     },
     project: "Reference data",
-    severity: "Critical",
+    severity: "Low",
+    category: "Navigation",
     figmaLink: "",
   },
 ]
@@ -127,24 +130,29 @@ const mockRequests = [
 type ComponentRequest = (typeof mockRequests)[0]
 
 const statusColors = {
-  Pending: "bg-orange-50 text-orange-700 border-orange-200",
-  InProgress: "bg-blue-50 text-blue-700 border-blue-200",
-  Done: "bg-green-50 text-green-700 border-green-200",
-  Denied: "bg-red-50 text-red-700 border-red-200",
+  Pending: "bg-gray-500/20 text-gray-300 border-gray-500/30",
+  "In Progress": "bg-blue-500/20 text-blue-300 border-blue-500/30",
+  Completed: "bg-green-500/20 text-green-300 border-green-500/30",
+}
+
+const priorityColors = {
+  Low: "bg-green-500/20 text-green-300 border-green-500/30",
+  Medium: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
+  High: "bg-orange-500/20 text-orange-300 border-orange-500/30",
+  Urgent: "bg-red-500/20 text-red-300 border-red-500/30",
 }
 
 const statusIcons = {
   Pending: AlertCircle,
-  InProgress: Clock,
-  Done: CheckCircle,
-  Denied: XCircle,
+  "In Progress": Clock,
+  Completed: CheckCircle,
 }
 
 export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDashboardProps) {
   const [requests, setRequests] = useState<ComponentRequest[]>(mockRequests)
   const [selectedRequest, setSelectedRequest] = useState<ComponentRequest | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [projectFilter, setProjectFilter] = useState<string>("all")
+  const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [searchTerm, setSearchTerm] = useState("")
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false)
   const [updateStatus, setUpdateStatus] = useState("")
@@ -155,8 +163,9 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
     requestName: "",
     justification: "",
     severity: "Medium",
+    category: "Display",
+    requesterName: "",
     requesterEmail: user.email,
-    project: "",
     figmaLink: "",
   })
 
@@ -170,11 +179,11 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
 
   const filteredRequests = requests.filter((request) => {
     const matchesStatus = statusFilter === "all" || request.status === statusFilter
-    const matchesProject = projectFilter === "all" || request.project === projectFilter
+    const matchesCategory = categoryFilter === "all" || request.category === categoryFilter
     const matchesSearch =
       request.requestName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.requesterName.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesStatus && matchesProject && matchesSearch
+    return matchesStatus && matchesCategory && matchesSearch
   })
 
   const handleStatusUpdate = () => {
@@ -203,9 +212,8 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
     return {
       total: requests.length,
       pending: requests.filter((r) => r.status === "Pending").length,
-      inProgress: requests.filter((r) => r.status === "InProgress").length,
-      done: requests.filter((r) => r.status === "Done").length,
-      denied: requests.filter((r) => r.status === "Denied").length,
+      inProgress: requests.filter((r) => r.status === "In Progress").length,
+      completed: requests.filter((r) => r.status === "Completed").length,
     }
   }
 
@@ -217,7 +225,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       requestName: manualRequestForm.requestName,
       justification: manualRequestForm.justification,
       requesterId: `manual_${Date.now()}`,
-      requesterName: getUserName(user.email),
+      requesterName: manualRequestForm.requesterName,
       requesterEmail: manualRequestForm.requesterEmail,
       status: "Pending",
       denialReason: "",
@@ -229,7 +237,8 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
         thumbnailUrl: "/placeholder.svg?height=200&width=300&text=Manual+Request",
       },
       severity: manualRequestForm.severity,
-      project: manualRequestForm.project,
+      category: manualRequestForm.category,
+      project: "Manual",
       figmaLink: manualRequestForm.figmaLink,
     }
 
@@ -239,35 +248,38 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       requestName: "",
       justification: "",
       severity: "Medium",
+      category: "Display",
+      requesterName: "",
       requesterEmail: user.email,
-      project: "",
       figmaLink: "",
     })
   }
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: "Google Sans, Roboto, Arial, sans-serif" }}>
+    <div
+      className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"
+      style={{ fontFamily: "Google Sans, Roboto, Arial, sans-serif" }}
+    >
       <div className="container mx-auto p-6 space-y-6 max-w-7xl">
         {/* Header */}
-        <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+        <div className="flex justify-between items-center pb-6 border-b border-white/10">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Component Request Dashboard</h1>
-            <p className="text-sm text-gray-600 mt-1">Manage and track component requests from your design team</p>
+            <h1 className="text-3xl font-semibold text-white">Component Request Dashboard</h1>
+            <p className="text-slate-300 mt-2">Manage and track component requests from your design team</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Button
               onClick={() => setIsManualRequestOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm transition-colors duration-200"
+              className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-medium shadow-lg shadow-purple-500/25 transition-all duration-200 hover:shadow-purple-500/40 hover:scale-105"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-2 h-5 w-5" />
               Create request
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  size="sm"
-                  className="border border-gray-300 px-3 py-2 rounded-md text-sm font-medium bg-white hover:bg-gray-50 transition-colors duration-200"
+                  className="border border-white/20 bg-white/5 backdrop-blur-sm px-4 py-3 rounded-lg font-medium text-white hover:bg-white/10 transition-all duration-200"
                 >
                   <User className="mr-2 h-4 w-4" />
                   {getUserName(user.email)}
@@ -275,21 +287,21 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px]"
+                className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl min-w-[200px]"
               >
-                <DropdownMenuLabel className="font-semibold px-4 py-2 text-gray-900">Account</DropdownMenuLabel>
-                <DropdownMenuSeparator className="border-t border-gray-100" />
+                <DropdownMenuLabel className="font-semibold px-4 py-2 text-white">Account</DropdownMenuLabel>
+                <DropdownMenuSeparator className="border-t border-white/10" />
                 <DropdownMenuItem disabled className="px-4 py-2">
                   <div className="flex flex-col">
-                    <span className="font-medium text-gray-900">{getUserName(user.email)}</span>
-                    <span className="text-xs text-gray-500">{user.email}</span>
-                    <span className="text-xs text-gray-500">{user.role}</span>
+                    <span className="font-medium text-white">{getUserName(user.email)}</span>
+                    <span className="text-xs text-slate-300">{user.email}</span>
+                    <span className="text-xs text-slate-300">{user.role}</span>
                   </div>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="border-t border-gray-100" />
+                <DropdownMenuSeparator className="border-t border-white/10" />
                 <DropdownMenuItem
                   onClick={onLogout}
-                  className="px-4 py-2 cursor-pointer hover:bg-gray-50 text-gray-700"
+                  className="px-4 py-2 cursor-pointer hover:bg-white/10 text-slate-300 hover:text-white transition-colors duration-200"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
@@ -300,48 +312,41 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow duration-200">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-purple-500/10">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <h3 className="text-sm font-medium text-gray-600">Total requests</h3>
+              <h3 className="text-sm font-medium text-slate-300">Total requests</h3>
             </div>
-            <div className="text-2xl font-normal text-gray-900">{statusCounts.total}</div>
+            <div className="text-3xl font-semibold text-white">{statusCounts.total}</div>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow duration-200">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-purple-500/10">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <h3 className="text-sm font-medium text-gray-600">Pending</h3>
-              <AlertCircle className="h-4 w-4 text-orange-500" />
+              <h3 className="text-sm font-medium text-slate-300">Pending</h3>
+              <AlertCircle className="h-5 w-5 text-gray-400" />
             </div>
-            <div className="text-2xl font-normal text-gray-900">{statusCounts.pending}</div>
+            <div className="text-3xl font-semibold text-white">{statusCounts.pending}</div>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow duration-200">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-purple-500/10">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <h3 className="text-sm font-medium text-gray-600">In progress</h3>
-              <Clock className="h-4 w-4 text-blue-500" />
+              <h3 className="text-sm font-medium text-slate-300">In progress</h3>
+              <Clock className="h-5 w-5 text-blue-400" />
             </div>
-            <div className="text-2xl font-normal text-gray-900">{statusCounts.inProgress}</div>
+            <div className="text-3xl font-semibold text-white">{statusCounts.inProgress}</div>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow duration-200">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-purple-500/10">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <h3 className="text-sm font-medium text-gray-600">Completed</h3>
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <h3 className="text-sm font-medium text-slate-300">Completed</h3>
+              <CheckCircle className="h-5 w-5 text-green-400" />
             </div>
-            <div className="text-2xl font-normal text-gray-900">{statusCounts.done}</div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow duration-200">
-            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <h3 className="text-sm font-medium text-gray-600">Denied</h3>
-              <XCircle className="h-4 w-4 text-red-500" />
-            </div>
-            <div className="text-2xl font-normal text-gray-900">{statusCounts.denied}</div>
+            <div className="text-3xl font-semibold text-white">{statusCounts.completed}</div>
           </div>
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white border border-gray-200 rounded-lg">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Component requests</h2>
-            <p className="text-sm text-gray-600 mt-1">Review and manage component requests from your design team</p>
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl shadow-xl shadow-purple-500/10">
+          <div className="p-6 border-b border-white/10">
+            <h2 className="text-xl font-semibold text-white">Component requests</h2>
+            <p className="text-slate-300 mt-1">Review and manage component requests from your design team</p>
           </div>
           <div className="p-6">
             <div className="flex gap-4 mb-6">
@@ -350,106 +355,94 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   placeholder="Search requests..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent backdrop-blur-sm"
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[140px] px-3 py-2 border border-gray-300 rounded-md text-sm bg-white">
+                <SelectTrigger className="w-[140px] px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-lg">
+                <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
                   <SelectItem value="all">All status</SelectItem>
                   <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="InProgress">In progress</SelectItem>
-                  <SelectItem value="Done">Done</SelectItem>
-                  <SelectItem value="Denied">Denied</SelectItem>
+                  <SelectItem value="In Progress">In progress</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={projectFilter} onValueChange={setProjectFilter}>
-                <SelectTrigger className="w-[140px] px-3 py-2 border border-gray-300 rounded-md text-sm bg-white">
-                  <SelectValue placeholder="Project" />
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[140px] px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm">
+                  <SelectValue placeholder="Category" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-lg">
-                  <SelectItem value="all">All projects</SelectItem>
-                  <SelectItem value="CATT">CATT</SelectItem>
-                  <SelectItem value="PTP">PTP</SelectItem>
-                  <SelectItem value="FX">FX</SelectItem>
-                  <SelectItem value="Reference data">Reference data</SelectItem>
-                  <SelectItem value="Credit risk">Credit risk</SelectItem>
-                  <SelectItem value="Collateral">Collateral</SelectItem>
+                <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
+                  <SelectItem value="all">All categories</SelectItem>
+                  <SelectItem value="Form">Form</SelectItem>
+                  <SelectItem value="Navigation">Navigation</SelectItem>
+                  <SelectItem value="Display">Display</SelectItem>
+                  <SelectItem value="Input">Input</SelectItem>
+                  <SelectItem value="Layout">Layout</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Requests Table */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b border-gray-200 bg-gray-50">
-                    <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <TableRow className="border-b border-white/10 bg-white/5">
+                    <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Component name
                     </TableHead>
-                    <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Requester
                     </TableHead>
-                    <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Requested
+                    <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                      Category
                     </TableHead>
-                    <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Status
                     </TableHead>
-                    <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Priority
                     </TableHead>
-                    <TableHead className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <TableHead className="px-6 py-4 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Actions
                     </TableHead>
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody className="bg-white divide-y divide-gray-200">
+                <TableBody className="divide-y divide-white/10">
                   {filteredRequests.map((request) => {
                     const StatusIcon = statusIcons[request.status as keyof typeof statusIcons]
                     return (
-                      <TableRow key={request.id} className="hover:bg-gray-50 transition-colors duration-150">
+                      <TableRow key={request.id} className="hover:bg-white/5 transition-colors duration-200">
                         <TableCell className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{request.requestName}</div>
+                          <div className="text-sm font-medium text-white">{request.requestName}</div>
                         </TableCell>
                         <TableCell className="px-6 py-4 whitespace-nowrap">
                           <div className="flex flex-col">
-                            <div className="text-sm text-gray-900">{request.requesterName}</div>
-                            <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full w-fit mt-1">
+                            <div className="text-sm text-white">{request.requesterName}</div>
+                            <div className="text-xs text-slate-400 bg-white/10 px-2 py-1 rounded-full w-fit mt-1">
                               {request.project}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(request.requestedAt).toLocaleDateString()}
+                        <TableCell className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-slate-300">{request.category}</span>
                         </TableCell>
                         <TableCell className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[request.status as keyof typeof statusColors]}`}
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusColors[request.status as keyof typeof statusColors]}`}
                           >
-                            <StatusIcon className="mr-1.5 h-3 w-3" />
-                            {request.status === "InProgress" ? "In progress" : request.status}
+                            {StatusIcon && <StatusIcon className="mr-1.5 h-3 w-3" />}
+                            {request.status}
                           </span>
                         </TableCell>
                         <TableCell className="px-6 py-4 whitespace-nowrap">
-                          {request.severity && (
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                request.severity === "Critical"
-                                  ? "bg-red-100 text-red-800"
-                                  : request.severity === "High"
-                                    ? "bg-orange-100 text-orange-800"
-                                    : request.severity === "Medium"
-                                      ? "bg-yellow-100 text-yellow-800"
-                                      : "bg-green-100 text-green-800"
-                              }`}
-                            >
-                              {request.severity}
-                            </span>
-                          )}
+                          <span
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${priorityColors[request.severity as keyof typeof priorityColors]}`}
+                          >
+                            {request.severity}
+                          </span>
                         </TableCell>
                         <TableCell className="px-6 py-4 whitespace-nowrap text-center">
                           <Button
@@ -461,7 +454,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                               setDenialReason(request.denialReason)
                               setIsUpdateDialogOpen(true)
                             }}
-                            className="px-3 py-1 text-xs border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+                            className="px-4 py-2 text-xs border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg"
                           >
                             Update
                           </Button>
@@ -472,7 +465,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                                className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors duration-200"
                               >
                                 <svg
                                   width="4"
@@ -490,85 +483,75 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
                               align="end"
-                              className="bg-white border border-gray-200 rounded-lg shadow-lg min-w-[120px]"
+                              className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl min-w-[120px]"
                             >
                               <Dialog>
                                 <DialogTrigger asChild>
                                   <DropdownMenuItem
                                     onSelect={(e) => e.preventDefault()}
-                                    className="px-3 py-2 cursor-pointer hover:bg-gray-50 text-gray-700 text-sm"
+                                    className="px-3 py-2 cursor-pointer hover:bg-white/10 text-slate-300 hover:text-white text-sm transition-colors duration-200"
                                   >
                                     <Eye className="mr-2 h-4 w-4" />
                                     View
                                   </DropdownMenuItem>
                                 </DialogTrigger>
-                                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl">
-                                  <DialogHeader className="px-6 py-4 border-b border-gray-200">
-                                    <DialogTitle className="text-lg font-semibold text-gray-900">
+                                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-purple-500/20">
+                                  <DialogHeader className="px-6 py-4 border-b border-white/10">
+                                    <DialogTitle className="text-xl font-semibold text-white">
                                       {request.requestName}
                                     </DialogTitle>
-                                    <DialogDescription className="text-sm text-gray-600">
+                                    <DialogDescription className="text-slate-300">
                                       Requested by {request.requesterName} on{" "}
                                       {new Date(request.requestedAt).toLocaleDateString()}
                                     </DialogDescription>
                                   </DialogHeader>
                                   <div className="px-6 py-4 space-y-4">
                                     <div>
-                                      <Label className="text-sm font-medium text-gray-700">Status</Label>
+                                      <Label className="text-sm font-medium text-slate-300">Status</Label>
                                       <div className="mt-1">
                                         <span
-                                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[request.status as keyof typeof statusColors]}`}
+                                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusColors[request.status as keyof typeof statusColors]}`}
                                         >
-                                          <StatusIcon className="mr-1.5 h-3 w-3" />
-                                          {request.status === "InProgress" ? "In progress" : request.status}
+                                          {StatusIcon && <StatusIcon className="mr-1.5 h-3 w-3" />}
+                                          {request.status}
                                         </span>
                                       </div>
                                     </div>
-                                    {request.severity && (
-                                      <div>
-                                        <Label className="text-sm font-medium text-gray-700">Priority</Label>
-                                        <div className="mt-1">
-                                          <span
-                                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                              request.severity === "Critical"
-                                                ? "bg-red-100 text-red-800"
-                                                : request.severity === "High"
-                                                  ? "bg-orange-100 text-orange-800"
-                                                  : request.severity === "Medium"
-                                                    ? "bg-yellow-100 text-yellow-800"
-                                                    : "bg-green-100 text-green-800"
-                                            }`}
-                                          >
-                                            {request.severity}
-                                          </span>
-                                        </div>
+                                    <div>
+                                      <Label className="text-sm font-medium text-slate-300">Priority</Label>
+                                      <div className="mt-1">
+                                        <span
+                                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${priorityColors[request.severity as keyof typeof priorityColors]}`}
+                                        >
+                                          {request.severity}
+                                        </span>
                                       </div>
-                                    )}
-                                    {request.requesterEmail && (
-                                      <div>
-                                        <Label className="text-sm font-medium text-gray-700">Requester email</Label>
-                                        <p className="mt-1 text-sm text-gray-600">{request.requesterEmail}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium text-slate-300">Category</Label>
+                                      <p className="mt-1 text-sm text-white">{request.category}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium text-slate-300">Requester email</Label>
+                                      <p className="mt-1 text-sm text-white">{request.requesterEmail}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium text-slate-300">Project</Label>
+                                      <div className="mt-1">
+                                        <span className="text-xs text-slate-400 bg-white/10 px-2 py-1 rounded-full">
+                                          {request.project}
+                                        </span>
                                       </div>
-                                    )}
-                                    {request.project && (
-                                      <div>
-                                        <Label className="text-sm font-medium text-gray-700">Project</Label>
-                                        <div className="mt-1">
-                                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                            {request.project}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    )}
+                                    </div>
                                     {request.figmaLink && (
                                       <div>
-                                        <Label className="text-sm font-medium text-gray-700">Figma link</Label>
+                                        <Label className="text-sm font-medium text-slate-300">Figma link</Label>
                                         <div className="mt-1">
                                           <a
                                             href={request.figmaLink}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-sm text-blue-600 hover:text-blue-800 underline"
+                                            className="text-sm text-violet-400 hover:text-violet-300 underline transition-colors duration-200"
                                           >
                                             {request.figmaLink}
                                           </a>
@@ -576,23 +559,17 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                                       </div>
                                     )}
                                     <div>
-                                      <Label className="text-sm font-medium text-gray-700">Justification</Label>
-                                      <p className="mt-1 text-sm text-gray-600">{request.justification}</p>
+                                      <Label className="text-sm font-medium text-slate-300">Description</Label>
+                                      <p className="mt-1 text-sm text-white">{request.justification}</p>
                                     </div>
-                                    {request.status === "Denied" && request.denialReason && (
-                                      <div>
-                                        <Label className="text-sm font-medium text-gray-700">Denial reason</Label>
-                                        <p className="mt-1 text-sm text-red-600">{request.denialReason}</p>
-                                      </div>
-                                    )}
                                     {request.frameData?.thumbnailUrl && (
                                       <div>
-                                        <Label className="text-sm font-medium text-gray-700">Design preview</Label>
+                                        <Label className="text-sm font-medium text-slate-300">Design preview</Label>
                                         <div className="mt-2">
                                           <img
                                             src={request.frameData.thumbnailUrl || "/placeholder.svg"}
                                             alt={`Preview of ${request.requestName}`}
-                                            className="rounded-lg border border-gray-200 max-w-full h-auto"
+                                            className="rounded-lg border border-white/20 max-w-full h-auto"
                                           />
                                         </div>
                                       </div>
@@ -605,7 +582,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                                   setSelectedRequest(request)
                                   setIsEditDialogOpen(true)
                                 }}
-                                className="px-3 py-2 cursor-pointer hover:bg-gray-50 text-gray-700 text-sm"
+                                className="px-3 py-2 cursor-pointer hover:bg-white/10 text-slate-300 hover:text-white text-sm transition-colors duration-200"
                               >
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
@@ -615,7 +592,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                                   const updatedRequests = requests.filter((r) => r.id !== request.id)
                                   setRequests(updatedRequests)
                                 }}
-                                className="px-3 py-2 cursor-pointer hover:bg-gray-50 text-red-600 text-sm"
+                                className="px-3 py-2 cursor-pointer hover:bg-white/10 text-red-400 hover:text-red-300 text-sm transition-colors duration-200"
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
@@ -634,56 +611,41 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
 
         {/* Update Status Dialog */}
         <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
-          <DialogContent className="bg-white border border-gray-200 rounded-lg shadow-xl max-w-md">
-            <DialogHeader className="px-6 py-4 border-b border-gray-200">
-              <DialogTitle className="text-lg font-semibold text-gray-900">Update request status</DialogTitle>
-              <DialogDescription className="text-sm text-gray-600">
+          <DialogContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-purple-500/20 max-w-md">
+            <DialogHeader className="px-6 py-4 border-b border-white/10">
+              <DialogTitle className="text-xl font-semibold text-white">Update request status</DialogTitle>
+              <DialogDescription className="text-slate-300">
                 Update the status of "{selectedRequest?.requestName}"
               </DialogDescription>
             </DialogHeader>
             <div className="px-6 py-4 space-y-4">
               <div>
-                <Label htmlFor="status" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="status" className="text-sm font-medium text-slate-300">
                   Status
                 </Label>
                 <Select value={updateStatus} onValueChange={setUpdateStatus}>
-                  <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white mt-1">
+                  <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-lg">
+                  <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
                     <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="InProgress">In progress</SelectItem>
-                    <SelectItem value="Done">Done</SelectItem>
-                    <SelectItem value="Denied">Denied</SelectItem>
+                    <SelectItem value="In Progress">In progress</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              {updateStatus === "Denied" && (
-                <div>
-                  <Label htmlFor="denial-reason" className="text-sm font-medium text-gray-700">
-                    Denial reason
-                  </Label>
-                  <Textarea
-                    id="denial-reason"
-                    placeholder="Please provide a reason for denying this request..."
-                    value={denialReason}
-                    onChange={(e) => setDenialReason(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mt-1 min-h-[80px] resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              )}
             </div>
-            <DialogFooter className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+            <DialogFooter className="px-6 py-4 border-t border-white/10 flex justify-end gap-3">
               <Button
                 variant="outline"
                 onClick={() => setIsUpdateDialogOpen(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+                className="px-4 py-2 border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleStatusUpdate}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors duration-200"
+                className="px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white rounded-lg font-medium shadow-lg shadow-purple-500/25 transition-all duration-200 hover:shadow-purple-500/40"
               >
                 Update
               </Button>
@@ -693,45 +655,46 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
 
         {/* Edit Request Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl">
-            <DialogHeader className="px-6 py-4 border-b border-gray-200">
-              <DialogTitle className="text-lg font-semibold text-gray-900">Edit request</DialogTitle>
-              <DialogDescription className="text-sm text-gray-600">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-purple-500/20">
+            <DialogHeader className="px-6 py-4 border-b border-white/10">
+              <DialogTitle className="text-xl font-semibold text-white">Edit request</DialogTitle>
+              <DialogDescription className="text-slate-300">
                 Edit the details of "{selectedRequest?.requestName}"
               </DialogDescription>
             </DialogHeader>
             <div className="px-6 py-4 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="edit-project" className="text-sm font-medium text-gray-700">
-                    Project *
+                  <Label htmlFor="edit-category" className="text-sm font-medium text-slate-300">
+                    Category *
                   </Label>
                   <Select
-                    value={selectedRequest?.project || ""}
+                    value={selectedRequest?.category || ""}
                     onValueChange={(value) => {
                       if (!selectedRequest) return
                       const updatedRequests = requests.map((r) =>
-                        r.id === selectedRequest.id ? { ...r, project: value, updatedAt: new Date().toISOString() } : r,
+                        r.id === selectedRequest.id
+                          ? { ...r, category: value, updatedAt: new Date().toISOString() }
+                          : r,
                       )
                       setRequests(updatedRequests)
-                      setSelectedRequest({ ...selectedRequest, project: value })
+                      setSelectedRequest({ ...selectedRequest, category: value })
                     }}
                   >
-                    <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white mt-1">
-                      <SelectValue placeholder="Select project" />
+                    <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1">
+                      <SelectValue placeholder="Select category" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-lg">
-                      <SelectItem value="CATT">CATT</SelectItem>
-                      <SelectItem value="PTP">PTP</SelectItem>
-                      <SelectItem value="FX">FX</SelectItem>
-                      <SelectItem value="Reference data">Reference data</SelectItem>
-                      <SelectItem value="Credit risk">Credit risk</SelectItem>
-                      <SelectItem value="Collateral">Collateral</SelectItem>
+                    <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
+                      <SelectItem value="Form">Form</SelectItem>
+                      <SelectItem value="Navigation">Navigation</SelectItem>
+                      <SelectItem value="Display">Display</SelectItem>
+                      <SelectItem value="Input">Input</SelectItem>
+                      <SelectItem value="Layout">Layout</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="edit-severity" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="edit-severity" className="text-sm font-medium text-slate-300">
                     Priority *
                   </Label>
                   <Select
@@ -747,26 +710,26 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                       setSelectedRequest({ ...selectedRequest, severity: value })
                     }}
                   >
-                    <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white mt-1">
+                    <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1">
                       <SelectValue placeholder="Select priority level" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-lg">
-                      <SelectItem value="Low">Low - Nice to have</SelectItem>
-                      <SelectItem value="Medium">Medium - Important for workflow</SelectItem>
-                      <SelectItem value="High">High - Blocking current work</SelectItem>
-                      <SelectItem value="Critical">Critical - Production issue</SelectItem>
+                    <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                      <SelectItem value="Urgent">Urgent</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="edit-component-name" className="text-sm font-medium text-gray-700">
-                  Component name *
+                <Label htmlFor="edit-component-name" className="text-sm font-medium text-slate-300">
+                  Component title *
                 </Label>
                 <Input
                   id="edit-component-name"
-                  placeholder="e.g., SocialProfileCard, PrimaryButton-WithIcon"
+                  placeholder="e.g., Advanced Data Table, Multi-step Form Wizard"
                   value={selectedRequest?.requestName || ""}
                   onChange={(e) => {
                     if (!selectedRequest) return
@@ -782,17 +745,17 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                     setRequests(updatedRequests)
                     setSelectedRequest({ ...selectedRequest, requestName: e.target.value })
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent backdrop-blur-sm mt-1"
                 />
               </div>
 
               <div>
-                <Label htmlFor="edit-justification" className="text-sm font-medium text-gray-700">
-                  Why is this component needed? *
+                <Label htmlFor="edit-justification" className="text-sm font-medium text-slate-300">
+                  Description *
                 </Label>
                 <Textarea
                   id="edit-justification"
-                  placeholder="Describe where this component will be used, its purpose, and any specific requirements..."
+                  placeholder="Describe the component requirements, use cases, and specific features needed..."
                   value={selectedRequest?.justification || ""}
                   onChange={(e) => {
                     if (!selectedRequest) return
@@ -808,12 +771,12 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                     setRequests(updatedRequests)
                     setSelectedRequest({ ...selectedRequest, justification: e.target.value })
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mt-1 min-h-[100px] resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent backdrop-blur-sm mt-1 min-h-[100px] resize-vertical"
                 />
               </div>
 
               <div>
-                <Label htmlFor="edit-figma-link" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="edit-figma-link" className="text-sm font-medium text-slate-300">
                   Figma link (optional)
                 </Label>
                 <Input
@@ -835,24 +798,24 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                     setRequests(updatedRequests)
                     setSelectedRequest({ ...selectedRequest, figmaLink: e.target.value })
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent backdrop-blur-sm mt-1"
                 />
               </div>
             </div>
-            <DialogFooter className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+            <DialogFooter className="px-6 py-4 border-t border-white/10 flex justify-end gap-3">
               <Button
                 variant="outline"
                 onClick={() => {
                   setIsEditDialogOpen(false)
                   setSelectedRequest(null)
                 }}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+                className="px-4 py-2 border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg"
               >
                 Cancel
               </Button>
               <Button
                 onClick={() => setIsEditDialogOpen(false)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors duration-200"
+                className="px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white rounded-lg font-medium shadow-lg shadow-purple-500/25 transition-all duration-200 hover:shadow-purple-500/40"
               >
                 Save changes
               </Button>
@@ -862,85 +825,97 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
 
         {/* Manual Request Dialog */}
         <Dialog open={isManualRequestOpen} onOpenChange={setIsManualRequestOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl">
-            <DialogHeader className="px-6 py-4 border-b border-gray-200">
-              <DialogTitle className="text-lg font-semibold text-gray-900">Create request</DialogTitle>
-              <DialogDescription className="text-sm text-gray-600">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-purple-500/20">
+            <DialogHeader className="px-6 py-4 border-b border-white/10">
+              <DialogTitle className="text-xl font-semibold text-white">Create request</DialogTitle>
+              <DialogDescription className="text-slate-300">
                 Submit a new component request for development.
               </DialogDescription>
             </DialogHeader>
             <div className="px-6 py-4 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="project" className="text-sm font-medium text-gray-700">
-                    Project *
+                  <Label htmlFor="category" className="text-sm font-medium text-slate-300">
+                    Category *
                   </Label>
                   <Select
-                    value={manualRequestForm.project}
-                    onValueChange={(value) => setManualRequestForm({ ...manualRequestForm, project: value })}
+                    value={manualRequestForm.category}
+                    onValueChange={(value) => setManualRequestForm({ ...manualRequestForm, category: value })}
                   >
-                    <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white mt-1">
-                      <SelectValue placeholder="Select project" />
+                    <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1">
+                      <SelectValue placeholder="Select category" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-lg">
-                      <SelectItem value="CATT">CATT</SelectItem>
-                      <SelectItem value="PTP">PTP</SelectItem>
-                      <SelectItem value="FX">FX</SelectItem>
-                      <SelectItem value="Reference data">Reference data</SelectItem>
-                      <SelectItem value="Credit risk">Credit risk</SelectItem>
-                      <SelectItem value="Collateral">Collateral</SelectItem>
+                    <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
+                      <SelectItem value="Form">Form</SelectItem>
+                      <SelectItem value="Navigation">Navigation</SelectItem>
+                      <SelectItem value="Display">Display</SelectItem>
+                      <SelectItem value="Input">Input</SelectItem>
+                      <SelectItem value="Layout">Layout</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="severity" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="severity" className="text-sm font-medium text-slate-300">
                     Priority *
                   </Label>
                   <Select
                     value={manualRequestForm.severity}
                     onValueChange={(value) => setManualRequestForm({ ...manualRequestForm, severity: value })}
                   >
-                    <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white mt-1">
+                    <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1">
                       <SelectValue placeholder="Select priority level" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-lg">
-                      <SelectItem value="Low">Low - Nice to have</SelectItem>
-                      <SelectItem value="Medium">Medium - Important for workflow</SelectItem>
-                      <SelectItem value="High">High - Blocking current work</SelectItem>
-                      <SelectItem value="Critical">Critical - Production issue</SelectItem>
+                    <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                      <SelectItem value="Urgent">Urgent</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="component-name" className="text-sm font-medium text-gray-700">
-                  Component name *
+                <Label htmlFor="component-name" className="text-sm font-medium text-slate-300">
+                  Component title *
                 </Label>
                 <Input
                   id="component-name"
-                  placeholder="e.g., SocialProfileCard, PrimaryButton-WithIcon"
+                  placeholder="e.g., Advanced Data Table, Multi-step Form Wizard"
                   value={manualRequestForm.requestName}
                   onChange={(e) => setManualRequestForm({ ...manualRequestForm, requestName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent backdrop-blur-sm mt-1"
                 />
               </div>
 
               <div>
-                <Label htmlFor="justification" className="text-sm font-medium text-gray-700">
-                  Why is this component needed? *
+                <Label htmlFor="requester-name" className="text-sm font-medium text-slate-300">
+                  Requester name *
+                </Label>
+                <Input
+                  id="requester-name"
+                  placeholder="Your full name"
+                  value={manualRequestForm.requesterName}
+                  onChange={(e) => setManualRequestForm({ ...manualRequestForm, requesterName: e.target.value })}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent backdrop-blur-sm mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="justification" className="text-sm font-medium text-slate-300">
+                  Description *
                 </Label>
                 <Textarea
                   id="justification"
-                  placeholder="Describe where this component will be used, its purpose, and any specific requirements..."
+                  placeholder="Describe the component requirements, use cases, and specific features needed..."
                   value={manualRequestForm.justification}
                   onChange={(e) => setManualRequestForm({ ...manualRequestForm, justification: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mt-1 min-h-[100px] resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent backdrop-blur-sm mt-1 min-h-[100px] resize-vertical"
                 />
               </div>
 
               <div>
-                <Label htmlFor="figma-link" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="figma-link" className="text-sm font-medium text-slate-300">
                   Figma link (optional)
                 </Label>
                 <Input
@@ -949,24 +924,24 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   placeholder="https://figma.com/file/..."
                   value={manualRequestForm.figmaLink || ""}
                   onChange={(e) => setManualRequestForm({ ...manualRequestForm, figmaLink: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent backdrop-blur-sm mt-1"
                 />
               </div>
             </div>
-            <DialogFooter className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+            <DialogFooter className="px-6 py-4 border-t border-white/10 flex justify-end gap-3">
               <Button
                 variant="outline"
                 onClick={() => setIsManualRequestOpen(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+                className="px-4 py-2 border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleManualRequestSubmit}
                 disabled={
-                  !manualRequestForm.requestName || !manualRequestForm.justification || !manualRequestForm.project
+                  !manualRequestForm.requestName || !manualRequestForm.justification || !manualRequestForm.requesterName
                 }
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white rounded-lg font-medium shadow-lg shadow-purple-500/25 transition-all duration-200 hover:shadow-purple-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Create request
               </Button>
