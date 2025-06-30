@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -169,6 +169,9 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
     figmaLink: "",
   })
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
   // Extract name from email for display
   const getUserName = (email: string) => {
     return email
@@ -177,14 +180,42 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       .replace(/\b\w/g, (l) => l.toUpperCase())
   }
 
-  const filteredRequests = requests.filter((request) => {
-    const matchesStatus = statusFilter === "all" || request.status === statusFilter
-    const matchesCategory = categoryFilter === "all" || request.category === categoryFilter
-    const matchesSearch =
-      request.requestName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.requesterName.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesStatus && matchesCategory && matchesSearch
-  })
+  const sortedAndFilteredRequests = requests
+    .filter((request) => {
+      const matchesStatus = statusFilter === "all" || request.status === statusFilter
+      const matchesCategory = categoryFilter === "all" || request.category === categoryFilter
+      const matchesSearch =
+        request.requestName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.requesterName.toLowerCase().includes(searchTerm.toLowerCase())
+      return matchesStatus && matchesCategory && matchesSearch
+    })
+    .sort((a, b) => {
+      // Sort by status priority: Pending (newest first), In Progress (newest first), Completed (oldest first)
+      const statusOrder = { Pending: 0, "In Progress": 1, Completed: 2 }
+      const statusDiff =
+        statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder]
+
+      if (statusDiff !== 0) return statusDiff
+
+      // Within same status, sort by date
+      const dateA = new Date(a.requestedAt).getTime()
+      const dateB = new Date(b.requestedAt).getTime()
+
+      if (a.status === "Completed") {
+        return dateA - dateB // Completed: oldest first
+      } else {
+        return dateB - dateA // Pending & In Progress: newest first
+      }
+    })
+
+  const totalPages = Math.ceil(sortedAndFilteredRequests.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedRequests = sortedAndFilteredRequests.slice(startIndex, startIndex + itemsPerPage)
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [statusFilter, categoryFilter, searchTerm])
 
   const handleStatusUpdate = () => {
     if (!selectedRequest) return
@@ -411,7 +442,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   </TableRow>
                 </TableHeader>
                 <TableBody className="divide-y divide-white/10">
-                  {filteredRequests.map((request) => {
+                  {paginatedRequests.map((request) => {
                     const StatusIcon = statusIcons[request.status as keyof typeof statusIcons]
                     return (
                       <TableRow key={request.id} className="hover:bg-white/5 transition-colors duration-200">
@@ -605,6 +636,81 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   })}
                 </TableBody>
               </Table>
+            </div>
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between mt-6">
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-slate-300">
+                  Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, sortedAndFilteredRequests.length)} of{" "}
+                  {sortedAndFilteredRequests.length} results
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-slate-300">Show:</span>
+                  <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
+                    <SelectTrigger className="w-20 px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm [&>span]:text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="30">30</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 text-xs border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </Button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum
+                    if (totalPages <= 5) {
+                      pageNum = i + 1
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i
+                    } else {
+                      pageNum = currentPage - 2 + i
+                    }
+
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-8 h-8 p-0 text-xs rounded-lg transition-all duration-200 ${
+                          currentPage === pageNum
+                            ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25"
+                            : "border border-white/20 bg-white/5 text-white hover:bg-white/10 backdrop-blur-sm"
+                        }`}
+                      >
+                        {pageNum}
+                      </Button>
+                    )
+                  })}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 text-xs border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </div>
         </div>
