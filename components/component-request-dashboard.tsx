@@ -264,8 +264,8 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
         {/* Header */}
         <div className="flex justify-between items-center pb-6 border-b border-white/10">
           <div>
-            <h1 className="text-3xl font-semibold text-white">Component Request Dashboard</h1>
-            <p className="text-slate-300 mt-2">Manage and track component requests from your design team</p>
+            <h1 className="text-3xl font-semibold text-white">Dashboard</h1>
+            <p className="text-slate-300 mt-2">Manage and track component requests.</p>
           </div>
           <div className="flex items-center gap-4">
             <Button
