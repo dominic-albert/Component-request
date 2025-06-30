@@ -624,10 +624,10 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   Status
                 </Label>
                 <Select value={updateStatus} onValueChange={setUpdateStatus}>
-                  <SelectTrigger className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 mt-1">
+                  <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1 [&>span]:text-white">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-300 rounded-lg shadow-xl">
+                  <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
                     <SelectItem value="Pending">Pending</SelectItem>
                     <SelectItem value="In Progress">In progress</SelectItem>
                     <SelectItem value="Completed">Completed</SelectItem>
