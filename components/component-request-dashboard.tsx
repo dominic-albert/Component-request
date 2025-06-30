@@ -390,7 +390,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[140px] px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm">
+                <SelectTrigger className="w-[140px] px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm [&>span]:text-white">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
@@ -401,7 +401,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                 </SelectContent>
               </Select>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[140px] px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm">
+                <SelectTrigger className="w-[140px] px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm [&>span]:text-white">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
@@ -787,7 +787,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                       setSelectedRequest({ ...selectedRequest, category: value })
                     }}
                   >
-                    <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1">
+                    <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1 [&>span]:text-white">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
@@ -816,7 +816,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                       setSelectedRequest({ ...selectedRequest, severity: value })
                     }}
                   >
-                    <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1">
+                    <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1 [&>span]:text-white">
                       <SelectValue placeholder="Select priority level" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
@@ -948,7 +948,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                     value={manualRequestForm.category}
                     onValueChange={(value) => setManualRequestForm({ ...manualRequestForm, category: value })}
                   >
-                    <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1">
+                    <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1 [&>span]:text-white">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
@@ -968,7 +968,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                     value={manualRequestForm.severity}
                     onValueChange={(value) => setManualRequestForm({ ...manualRequestForm, severity: value })}
                   >
-                    <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1">
+                    <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1 [&>span]:text-white">
                       <SelectValue placeholder="Select priority level" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
