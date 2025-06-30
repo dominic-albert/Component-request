@@ -257,7 +257,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900"
+      className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900"
       style={{ fontFamily: "Google Sans, Roboto, Arial, sans-serif" }}
     >
       <div className="container mx-auto p-6 space-y-6 max-w-7xl">
@@ -270,7 +270,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
           <div className="flex items-center gap-4">
             <Button
               onClick={() => setIsManualRequestOpen(true)}
-              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white px-6 py-3 rounded-lg font-medium shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:shadow-emerald-500/40 hover:scale-105"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-lg font-medium shadow-lg shadow-blue-500/25 transition-all duration-200 hover:shadow-blue-500/40 hover:scale-105"
             >
               <Plus className="mr-2 h-5 w-5" />
               Create request
@@ -313,27 +313,27 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
 
         {/* Stats Cards */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-emerald-500/10">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-500/10">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
               <h3 className="text-sm font-medium text-slate-300">Total requests</h3>
             </div>
             <div className="text-3xl font-semibold text-white">{statusCounts.total}</div>
           </div>
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-emerald-500/10">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-500/10">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
               <h3 className="text-sm font-medium text-slate-300">Pending</h3>
               <AlertCircle className="h-5 w-5 text-gray-400" />
             </div>
             <div className="text-3xl font-semibold text-white">{statusCounts.pending}</div>
           </div>
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-emerald-500/10">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-500/10">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
               <h3 className="text-sm font-medium text-slate-300">In progress</h3>
               <Clock className="h-5 w-5 text-blue-400" />
             </div>
             <div className="text-3xl font-semibold text-white">{statusCounts.inProgress}</div>
           </div>
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-emerald-500/10">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-500/10">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
               <h3 className="text-sm font-medium text-slate-300">Completed</h3>
               <CheckCircle className="h-5 w-5 text-green-400" />
@@ -343,7 +343,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl shadow-xl shadow-emerald-500/10">
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl shadow-xl shadow-blue-500/10">
           <div className="p-6 border-b border-white/10">
             <h2 className="text-xl font-semibold text-white">Component requests</h2>
             <p className="text-slate-300 mt-1">Review and manage component requests from your design team</p>
@@ -355,7 +355,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   placeholder="Search requests..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent backdrop-blur-sm"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm"
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -495,7 +495,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                                     View
                                   </DropdownMenuItem>
                                 </DialogTrigger>
-                                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-emerald-500/20">
+                                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-blue-500/20">
                                   <DialogHeader className="px-6 py-4 border-b border-white/10">
                                     <DialogTitle className="text-xl font-semibold text-white">
                                       {request.requestName}
@@ -551,7 +551,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                                             href={request.figmaLink}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-sm text-emerald-400 hover:text-emerald-300 underline transition-colors duration-200"
+                                            className="text-sm text-blue-400 hover:text-blue-300 underline transition-colors duration-200"
                                           >
                                             {request.figmaLink}
                                           </a>
@@ -611,7 +611,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
 
         {/* Update Status Dialog */}
         <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
-          <DialogContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-emerald-500/20 max-w-md">
+          <DialogContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-blue-500/20 max-w-md">
             <DialogHeader className="px-6 py-4 border-b border-white/10">
               <DialogTitle className="text-xl font-semibold text-white">Update request status</DialogTitle>
               <DialogDescription className="text-slate-300">
@@ -645,7 +645,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
               </Button>
               <Button
                 onClick={handleStatusUpdate}
-                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-lg font-medium shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:shadow-emerald-500/40"
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium shadow-lg shadow-blue-500/25 transition-all duration-200 hover:shadow-blue-500/40"
               >
                 Update
               </Button>
@@ -655,7 +655,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
 
         {/* Edit Request Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-emerald-500/20">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-blue-500/20">
             <DialogHeader className="px-6 py-4 border-b border-white/10">
               <DialogTitle className="text-xl font-semibold text-white">Edit request</DialogTitle>
               <DialogDescription className="text-slate-300">
@@ -745,7 +745,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                     setRequests(updatedRequests)
                     setSelectedRequest({ ...selectedRequest, requestName: e.target.value })
                   }}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent backdrop-blur-sm mt-1"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm mt-1"
                 />
               </div>
 
@@ -771,7 +771,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                     setRequests(updatedRequests)
                     setSelectedRequest({ ...selectedRequest, justification: e.target.value })
                   }}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent backdrop-blur-sm mt-1 min-h-[100px] resize-vertical"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm mt-1 min-h-[100px] resize-vertical"
                 />
               </div>
 
@@ -798,7 +798,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                     setRequests(updatedRequests)
                     setSelectedRequest({ ...selectedRequest, figmaLink: e.target.value })
                   }}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent backdrop-blur-sm mt-1"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm mt-1"
                 />
               </div>
             </div>
@@ -815,7 +815,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
               </Button>
               <Button
                 onClick={() => setIsEditDialogOpen(false)}
-                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-lg font-medium shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:shadow-emerald-500/40"
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium shadow-lg shadow-blue-500/25 transition-all duration-200 hover:shadow-blue-500/40"
               >
                 Save changes
               </Button>
@@ -825,7 +825,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
 
         {/* Manual Request Dialog */}
         <Dialog open={isManualRequestOpen} onOpenChange={setIsManualRequestOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-emerald-500/20">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-blue-500/20">
             <DialogHeader className="px-6 py-4 border-b border-white/10">
               <DialogTitle className="text-xl font-semibold text-white">Create request</DialogTitle>
               <DialogDescription className="text-slate-300">
@@ -884,7 +884,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   placeholder="e.g., Advanced Data Table, Multi-step Form Wizard"
                   value={manualRequestForm.requestName}
                   onChange={(e) => setManualRequestForm({ ...manualRequestForm, requestName: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent backdrop-blur-sm mt-1"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm mt-1"
                 />
               </div>
 
@@ -897,7 +897,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   placeholder="Your full name"
                   value={manualRequestForm.requesterName}
                   onChange={(e) => setManualRequestForm({ ...manualRequestForm, requesterName: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent backdrop-blur-sm mt-1"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm mt-1"
                 />
               </div>
 
@@ -910,7 +910,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   placeholder="Describe the component requirements, use cases, and specific features needed..."
                   value={manualRequestForm.justification}
                   onChange={(e) => setManualRequestForm({ ...manualRequestForm, justification: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent backdrop-blur-sm mt-1 min-h-[100px] resize-vertical"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm mt-1 min-h-[100px] resize-vertical"
                 />
               </div>
 
@@ -924,7 +924,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   placeholder="https://figma.com/file/..."
                   value={manualRequestForm.figmaLink || ""}
                   onChange={(e) => setManualRequestForm({ ...manualRequestForm, figmaLink: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent backdrop-blur-sm mt-1"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm mt-1"
                 />
               </div>
             </div>
@@ -941,7 +941,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                 disabled={
                   !manualRequestForm.requestName || !manualRequestForm.justification || !manualRequestForm.requesterName
                 }
-                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-lg font-medium shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:shadow-emerald-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium shadow-lg shadow-blue-500/25 transition-all duration-200 hover:shadow-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Create request
               </Button>
