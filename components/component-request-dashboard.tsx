@@ -421,7 +421,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                         <TableCell className="px-6 py-4 whitespace-nowrap">
                           <div className="flex flex-col">
                             <div className="text-sm text-white">{request.requesterName}</div>
-                            <div className="text-xs text-slate-400 bg-white/10 px-2 py-1 rounded-full w-fit mt-1">
+                            <div className="text-xs bg-white/10 px-2 py-1 rounded-full w-fit mt-1 text-white">
                               {request.project}
                             </div>
                           </div>
