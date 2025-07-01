@@ -1,5 +1,7 @@
 "use client"
 
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
+
 import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,7 +22,6 @@ import { Clock, CheckCircle, AlertCircle, Plus, Eye, LogOut, User, Edit, Trash2 
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -325,13 +326,23 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="border border-white/20 bg-white/5 backdrop-blur-sm px-4 py-3 rounded-lg font-medium text-white hover:bg-white/10 transition-all duration-200"
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  {getUserName(user.email)}
-                </Button>
+                <div className="flex items-center gap-3 px-4 py-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg hover:bg-white/10 transition-all duration-200 cursor-pointer group">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/25">
+                    <User className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-white">{getUserName(user.email)}</span>
+                    <span className="text-xs text-slate-400">{user.role}</span>
+                  </div>
+                  <svg
+                    className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors duration-200 ml-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
@@ -347,6 +358,23 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="border-t border-white/10" />
+                <DropdownMenuItem
+                  className="px-4 py-2 cursor-pointer hover:bg-white/10 text-slate-300 hover:text-white transition-colors duration-200"
+                  onClick={() => {
+                    // TODO: Open API Key management dialog for Figma plugin
+                    alert("API Key management coming soon for Figma plugin integration!")
+                  }}
+                >
+                  <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 7a2 2 0 012 2m0 0a2 2 0 012 2m-2-2h-6m6 0v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9a2 2 0 012-2h6z"
+                    />
+                  </svg>
+                  API Settings
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={onLogout}
                   className="px-4 py-2 cursor-pointer hover:bg-white/10 text-slate-300 hover:text-white transition-colors duration-200"
