@@ -173,6 +173,10 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
 
+  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false)
+  const [apiKey, setApiKey] = useState("")
+  const [isGeneratingKey, setIsGeneratingKey] = useState(false)
+
   // Generate next ID
   const generateNextId = () => {
     const existingIds = requests.map((r) => Number.parseInt(r.id.replace("CR", "")))
@@ -304,6 +308,16 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
     })
   }
 
+  const generateApiKey = () => {
+    setIsGeneratingKey(true)
+    // Simulate API key generation
+    setTimeout(() => {
+      const newKey = `crs_${user.email.split("@")[0]}_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 9)}`
+      setApiKey(newKey)
+      setIsGeneratingKey(false)
+    }, 1500)
+  }
+
   return (
     <div
       className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900"
@@ -317,13 +331,6 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
             <p className="text-slate-300 mt-2">Manage and track component requests.</p>
           </div>
           <div className="flex items-center gap-4">
-            <Button
-              onClick={() => setIsManualRequestOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-lg font-medium shadow-lg shadow-blue-500/25 transition-all duration-200 hover:shadow-blue-500/40 hover:scale-105"
-            >
-              <Plus className="mr-2 h-5 w-5" />
-              Create request
-            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-3 px-4 py-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg hover:bg-white/10 transition-all duration-200 cursor-pointer group">
@@ -360,10 +367,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                 <DropdownMenuSeparator className="border-t border-white/10" />
                 <DropdownMenuItem
                   className="px-4 py-2 cursor-pointer hover:bg-white/10 text-slate-300 hover:text-white transition-colors duration-200"
-                  onClick={() => {
-                    // TODO: Open API Key management dialog for Figma plugin
-                    alert("API Key management coming soon for Figma plugin integration!")
-                  }}
+                  onClick={() => setIsApiKeyDialogOpen(true)}
                 >
                   <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -427,8 +431,19 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
         {/* Filters and Search */}
         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl shadow-xl shadow-blue-500/10">
           <div className="p-6 border-b border-white/10">
-            <h2 className="text-xl font-semibold text-white">Component requests</h2>
-            <p className="text-slate-300 mt-1">Review and manage component requests from your design team</p>
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Component requests</h2>
+                <p className="text-slate-300 mt-1">Review and manage component requests from your design team</p>
+              </div>
+              <Button
+                onClick={() => setIsManualRequestOpen(true)}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-lg font-medium shadow-lg shadow-blue-500/25 transition-all duration-200 hover:shadow-blue-500/40 hover:scale-105"
+              >
+                <Plus className="mr-2 h-5 w-5" />
+                Create request
+              </Button>
+            </div>
           </div>
           <div className="p-6">
             <div className="flex gap-4 mb-6">
@@ -1180,6 +1195,139 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
               >
                 Create request
               </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* API Key Management Dialog */}
+        <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
+          <DialogContent className="max-w-md bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-blue-500/20">
+            <DialogHeader className="px-6 py-4 border-b border-white/10">
+              <DialogTitle className="text-xl font-semibold text-white">API Settings</DialogTitle>
+              <DialogDescription className="text-slate-300">
+                Manage your API key for Figma plugin integration
+              </DialogDescription>
+            </DialogHeader>
+            <div className="px-6 py-4 space-y-6">
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <svg
+                    className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-300 mb-1">Figma Plugin Integration</h4>
+                    <p className="text-xs text-blue-200/80">
+                      Use this API key in the Figma plugin to automatically create component requests from selected
+                      frames or components.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-slate-300">Your API Key</Label>
+                <div className="mt-2 space-y-3">
+                  {apiKey ? (
+                    <div className="relative">
+                      <Input
+                        value={apiKey}
+                        readOnly
+                        className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white font-mono text-sm pr-20"
+                      />
+                      <Button
+                        onClick={() => {
+                          navigator.clipboard.writeText(apiKey)
+                          // You could add a toast notification here
+                        }}
+                        size="sm"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                      >
+                        Copy
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <svg
+                        className="w-12 h-12 text-slate-400 mx-auto mb-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 7a2 2 0 012 2m0 0a2 2 0 012 2m-2-2h-6m6 0v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9a2 2 0 012-2h6z"
+                        />
+                      </svg>
+                      <p className="text-slate-400 text-sm mb-4">No API key generated yet</p>
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={generateApiKey}
+                    disabled={isGeneratingKey}
+                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium shadow-lg shadow-blue-500/25 transition-all duration-200 hover:shadow-blue-500/40 disabled:opacity-50"
+                  >
+                    {isGeneratingKey ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Generating...
+                      </div>
+                    ) : (
+                      <>{apiKey ? "Regenerate API Key" : "Generate API Key"}</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <svg
+                    className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
+                  </svg>
+                  <div>
+                    <h4 className="text-sm font-medium text-amber-300 mb-1">Security Notice</h4>
+                    <p className="text-xs text-amber-200/80">
+                      Keep your API key secure. Don't share it publicly or commit it to version control.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>
