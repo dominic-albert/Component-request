@@ -1235,99 +1235,36 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-slate-300">Your API Key</Label>
-                <div className="mt-2 space-y-3">
-                  {apiKey ? (
-                    <div className="relative">
-                      <Input
-                        value={apiKey}
-                        readOnly
-                        className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white font-mono text-sm pr-20"
-                      />
-                      <Button
-                        onClick={() => {
-                          navigator.clipboard.writeText(apiKey)
-                          // You could add a toast notification here
-                        }}
-                        size="sm"
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs"
-                      >
-                        Copy
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <svg
-                        className="w-12 h-12 text-slate-400 mx-auto mb-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 7a2 2 0 012 2m0 0a2 2 0 012 2m-2-2h-6m6 0v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9a2 2 0 012-2h6z"
-                        />
-                      </svg>
-                      <p className="text-slate-400 text-sm mb-4">No API key generated yet</p>
-                    </div>
-                  )}
-
+                <Label htmlFor="api-key" className="text-sm font-medium text-slate-300">
+                  API Key
+                </Label>
+                <div className="flex items-center gap-3 mt-2">
+                  <Input
+                    id="api-key"
+                    type="text"
+                    readOnly
+                    value={apiKey}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm"
+                  />
                   <Button
+                    variant="outline"
                     onClick={generateApiKey}
                     disabled={isGeneratingKey}
-                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium shadow-lg shadow-blue-500/25 transition-all duration-200 hover:shadow-blue-500/40 disabled:opacity-50"
+                    className="px-4 py-2 border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg"
                   >
-                    {isGeneratingKey ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        Generating...
-                      </div>
-                    ) : (
-                      <>{apiKey ? "Regenerate API Key" : "Generate API Key"}</>
-                    )}
+                    {isGeneratingKey ? "Generating..." : "Generate"}
                   </Button>
                 </div>
+                <p className="text-xs text-slate-400 mt-1">Keep this key secure. Regenerate if compromised.</p>
               </div>
-
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                    />
-                  </svg>
-                  <div>
-                    <h4 className="text-sm font-medium text-amber-300 mb-1">Security Notice</h4>
-                    <p className="text-xs text-amber-200/80">
-                      Keep your API key secure. Don't share it publicly or commit it to version control.
-                    </p>
-                  </div>
-                </div>
-              </div>
+            </div>
+            <DialogFooter className="px-6 py-4 border-t border-white/10 flex justify-end">
+              <Button
+                onClick={() => setIsApiKeyDialogOpen(false)}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium shadow-lg shadow-blue-500/25 transition-all duration-200 hover:shadow-blue-500/40"
+              >
+                Close
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
