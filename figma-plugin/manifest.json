@@ -1,8 +1,14 @@
 {
-  "name": "Component Request",
-  "id": "1271824114444192941",
+  "name": "Component Request System",
+  "id": "component-request-system",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
-  "editorType": ["figma", "figma"]
+  "editorType": ["figma", "figjam"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["*"],
+    "reasoning": "This plugin sends component request data to a user's dashboard API, which can be hosted on any domain."
+  },
+  "permissions": ["currentuser"]
 }

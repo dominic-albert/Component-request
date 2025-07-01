@@ -2,7 +2,11 @@
 const figma = window.figma // Declare figma variable
 const __html__ = "<div>Your UI HTML here</div>" // Declare __html__ variable
 
-figma.showUI(__html__, { width: 320, height: 480 })
+figma.showUI(__html__, {
+  width: 420,
+  height: 720,
+  themeColors: true,
+})
 
 // Store current selection
 let currentSelection = []
@@ -213,45 +217,19 @@ async function createComponentRequest(requestData) {
 }
 
 // Handle messages from UI
-figma.ui.onmessage = (msg) => {
-  if (msg.type === "create-request") {
-    const { componentName, description } = msg
+figma.ui.onmessage = async (msg) => {
+  switch (msg.type) {
+    case "get-selection":
+      updateSelection()
+      break
 
-    // Check if a frame or component is selected
-    if (figma.currentPage.selection.length === 0) {
-      figma.ui.postMessage({
-        type: "error",
-        message: "Please select a frame or component to create a request.",
-      })
-      return
-    }
+    case "create-request":
+      await createComponentRequest(msg.data)
+      break
 
-    const selectedNode = figma.currentPage.selection[0]
-
-    // Verify that the selected node is a frame or component
-    if (selectedNode.type !== "FRAME" && selectedNode.type !== "COMPONENT") {
-      figma.ui.postMessage({
-        type: "error",
-        message: "Selected node must be a frame or component.",
-      })
-      return
-    }
-
-    // Create a request object
-    const request = {
-      componentName: componentName,
-      description: description,
-      nodeId: selectedNode.id,
-      fileId: figma.fileKey,
-    }
-
-    // Send the request data back to the UI
-    figma.ui.postMessage({
-      type: "request-created",
-      request: request,
-    })
-
-    figma.closePlugin(`Request created for ${componentName}!`)
+    case "close-plugin":
+      figma.closePlugin()
+      break
   }
 }
 

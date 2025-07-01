@@ -2,9 +2,11 @@
 
 // Inspired by react-hot-toast library
 import * as React from "react"
-import { useToast as useUIToast } from "@/components/ui/use-toast"
 
-import type { ToastActionElement, ToastProps } from "@/components/ui/toast"
+import type {
+  ToastActionElement,
+  ToastProps,
+} from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
@@ -83,7 +85,9 @@ export const reducer = (state: State, action: Action): State => {
     case "UPDATE_TOAST":
       return {
         ...state,
-        toasts: state.toasts.map((t) => (t.id === action.toast.id ? { ...t, ...action.toast } : t)),
+        toasts: state.toasts.map((t) =>
+          t.id === action.toast.id ? { ...t, ...action.toast } : t
+        ),
       }
 
     case "DISMISS_TOAST": {
@@ -107,7 +111,7 @@ export const reducer = (state: State, action: Action): State => {
                 ...t,
                 open: false,
               }
-            : t,
+            : t
         ),
       }
     }
@@ -167,21 +171,7 @@ function toast({ ...props }: Toast) {
   }
 }
 
-function useToastHook() {
-  const { toast } = useUIToast()
-
-  const showToast = (title: string, description?: string, variant?: "default" | "destructive") => {
-    toast({
-      title,
-      description,
-      variant,
-    })
-  }
-
-  return { showToast }
-}
-
-function useToastState() {
+function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
@@ -201,4 +191,4 @@ function useToastState() {
   }
 }
 
-export { useToastState, useToastHook, toast }
+export { useToast, toast }
