@@ -312,231 +312,291 @@
   </div>
 
   <script>
-    let currentSelection = null;
-    let currentFigmaLink = null;
-    let apiSettings = null;
+    // Plugin UI JavaScript - Clean implementation
+    const pluginUI = {
+      currentSelection: null,
+      currentFigmaLink: null,
+      apiSettings: null,
 
-    // Initialize the plugin
-    function init() {
-      // Load saved API settings
-      loadApiSettings();
-      
-      // Request current selection
-      parent.postMessage({ pluginMessage: { type: 'get-selection' } }, '*');
-      
-      // Pre-fill user email if available
-      const userEmail = getCurrentUserEmail();
-      if (userEmail) {
-        document.getElementById('requesterEmail').value = userEmail;
-      }
-    }
+      init() {
+        this.setupEventListeners()
+        this.loadApiSettings()
+        this.requestSelectionUpdate()
+      },
 
-    function loadApiSettings() {
-      try {
-        // Try to load from plugin storage (this might not work in all contexts)
-        const saved = localStorage.getItem('componentRequestApiSettings');
-        if (saved) {
-          apiSettings = JSON.parse(saved);
-          document.getElementById('apiEndpoint').value = apiSettings.endpoint || '';
-          document.getElementById('apiKey').value = apiSettings.key || '';
-          
-          if (apiSettings.endpoint && apiSettings.key) {
-            showMainForm();
+      setupEventListeners() {
+        // Listen for messages from plugin code
+        window.addEventListener('message', (event) => {
+          this.handlePluginMessage(event.data.pluginMessage)
+        })
+      },
+
+      loadApiSettings() {
+        // Try to load from session storage (more reliable than localStorage in plugins)
+        try {
+          const saved = sessionStorage.getItem('componentRequestApiSettings')
+          if (saved) {
+            this.apiSettings = JSON.parse(saved)
+            document.getElementById('apiEndpoint').value = this.apiSettings.endpoint || ''
+            document.getElementById('apiKey').value = this.apiSettings.key || ''
+            
+            if (this.apiSettings.endpoint && this.apiSettings.key) {
+              this.showMainForm()
+            }
           }
+        } catch (error) {
+          // Session storage might not be available, that's okay
+          console.log('Could not load saved settings:', error)
         }
-      } catch (error) {
-        // localStorage might not be available, that's okay
-        console.log('Could not load saved settings:', error);
+      },
+
+      saveApiSettings() {
+        const endpoint = document.getElementById('apiEndpoint').value.trim()
+        const key = document.getElementById('apiKey').value.trim()
+        
+        if (!endpoint || !key) {
+          this.showError('Please enter both API endpoint and API key')
+          return
+        }
+        
+        // Validate URL format
+        try {
+          new URL(endpoint)
+        } catch (error) {
+          this.showError('Please enter a valid API endpoint URL')
+          return
+        }
+        
+        this.apiSettings = { endpoint, key }
+        
+        try {
+          sessionStorage.setItem('componentRequestApiSettings', JSON.stringify(this.apiSettings))
+        } catch (error) {
+          console.log('Could not save settings:', error)
+        }
+        
+        this.showMainForm()
+      },
+
+      showMainForm() {
+        document.getElementById('apiSetup').classList.add('hidden')
+        document.getElementById('mainForm').classList.remove('hidden')
+      },
+
+      requestSelectionUpdate() {
+        this.sendToPlugin({ type: 'get-selection' })
+      },
+
+      sendToPlugin(message) {
+        parent.postMessage({ pluginMessage: message }, '*')
+      },
+
+      handlePluginMessage(message) {
+        if (!message) return
+
+        const { type, data, link, error } = message
+
+        switch (type) {
+          case 'selection-updated':
+            this.updateSelectionInfo(data, link, error)
+            break
+            
+          case 'request-success':
+            this.handleRequestSuccess(data)
+            break
+            
+          case 'request-error':
+            this.handleRequestError(error)
+            break
+        }
+      },
+
+      updateSelectionInfo(selection, link, error) {
+        const infoEl = document.getElementById('selectionInfo')
+        
+        this.hideMessages()
+        
+        if (error) {
+          this.showError(error)
+          infoEl.classList.add('hidden')
+          this.currentSelection = null
+          this.currentFigmaLink = null
+        } else if (selection && selection.length > 0) {
+          const item = selection[0]
+          document.getElementById('selectionName').textContent = `Name: ${item.name}`
+          document.getElementById('selectionType').textContent = `Type: ${item.type}`
+          document.getElementById('selectionDimensions').textContent = `Size: ${Math.round(item.width)} × ${Math.round(item.height)}px`
+          
+          // Pre-fill component name if empty
+          const nameInput = document.getElementById('componentName')
+          if (!nameInput.value) {
+            nameInput.value = item.name
+          }
+          
+          infoEl.classList.remove('hidden')
+          this.currentSelection = item
+          this.currentFigmaLink = link
+        } else {
+          infoEl.classList.add('hidden')
+          this.currentSelection = null
+          this.currentFigmaLink = null
+        }
+
+        this.checkFormValidity()
+      },
+
+      handleRequestSuccess(data) {
+        this.resetLoadingState()
+        this.showSuccess(`Request created successfully! ID: ${data.id || 'Unknown'}`)
+        this.clearForm()
+      },
+
+      handleRequestError(error) {
+        this.resetLoadingState()
+        this.showError(`Failed to create request: ${error}`)
+      },
+
+      showError(message) {
+        const errorEl = document.getElementById('errorMessage')
+        errorEl.textContent = message
+        errorEl.classList.remove('hidden')
+        document.getElementById('successMessage').classList.add('hidden')
+      },
+
+      showSuccess(message) {
+        const successEl = document.getElementById('successMessage')
+        successEl.textContent = message
+        successEl.classList.remove('hidden')
+        document.getElementById('errorMessage').classList.add('hidden')
+      },
+
+      hideMessages() {
+        document.getElementById('errorMessage').classList.add('hidden')
+        document.getElementById('successMessage').classList.add('hidden')
+      },
+
+      checkFormValidity() {
+        const apiValid = this.apiSettings && this.apiSettings.endpoint && this.apiSettings.key
+        const category = document.getElementById('category').value
+        const priority = document.getElementById('priority').value
+        const componentName = document.getElementById('componentName').value.trim()
+        const requesterName = document.getElementById('requesterName').value.trim()
+        const requesterEmail = document.getElementById('requesterEmail').value.trim()
+        const description = document.getElementById('description').value.trim()
+
+        const isFormValid = apiValid && category && priority && componentName && 
+                           requesterName && requesterEmail && description && 
+                           this.currentSelection
+
+        document.getElementById('createButton').disabled = !isFormValid
+      },
+
+      createRequest() {
+        this.hideMessages()
+        
+        if (!this.apiSettings || !this.apiSettings.endpoint || !this.apiSettings.key) {
+          this.showError('API settings are required. Please configure them first.')
+          return
+        }
+        
+        if (!this.currentSelection) {
+          this.showError('Please select a Frame or Component first')
+          return
+        }
+        
+        // Get form values
+        const category = document.getElementById('category').value
+        const priority = document.getElementById('priority').value
+        const componentName = document.getElementById('componentName').value.trim()
+        const requesterName = document.getElementById('requesterName').value.trim()
+        const requesterEmail = document.getElementById('requesterEmail').value.trim()
+        const description = document.getElementById('description').value.trim()
+        
+        // Validate required fields
+        if (!category || !priority || !componentName || !requesterName || !requesterEmail || !description) {
+          this.showError('Please fill in all required fields')
+          return
+        }
+        
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(requesterEmail)) {
+          this.showError('Please enter a valid email address')
+          return
+        }
+        
+        // Show loading state
+        this.setLoadingState(true)
+        
+        // Send request to plugin code
+        const requestData = {
+          apiKey: this.apiSettings.key,
+          apiEndpoint: this.apiSettings.endpoint,
+          category,
+          priority,
+          componentName,
+          requesterName,
+          requesterEmail,
+          description,
+          selection: this.currentSelection,
+          figmaLink: this.currentFigmaLink
+        }
+        
+        this.sendToPlugin({ type: 'create-request', data: requestData })
+      },
+
+      clearForm() {
+        document.getElementById('category').value = ''
+        document.getElementById('priority').value = ''
+        document.getElementById('componentName').value = ''
+        document.getElementById('requesterName').value = ''
+        document.getElementById('description').value = ''
+        this.hideMessages()
+        this.checkFormValidity()
+      },
+
+      setLoadingState(isLoading) {
+        const actionButtons = document.getElementById('actionButtons')
+        const loadingState = document.getElementById('loadingState')
+        
+        if (isLoading) {
+          actionButtons.classList.add('hidden')
+          loadingState.classList.remove('hidden')
+        } else {
+          actionButtons.classList.remove('hidden')
+          loadingState.classList.add('hidden')
+        }
+      },
+
+      resetLoadingState() {
+        this.setLoadingState(false)
+        this.checkFormValidity()
       }
     }
 
+    // Global functions for onclick handlers
     function saveApiSettings() {
-      const endpoint = document.getElementById('apiEndpoint').value.trim();
-      const key = document.getElementById('apiKey').value.trim();
-      
-      if (!endpoint || !key) {
-        showError('Please enter both API endpoint and API key');
-        return;
-      }
-      
-      // Validate URL format
-      try {
-        new URL(endpoint);
-      } catch (error) {
-        showError('Please enter a valid API endpoint URL');
-        return;
-      }
-      
-      apiSettings = { endpoint, key };
-      
-      try {
-        localStorage.setItem('componentRequestApiSettings', JSON.stringify(apiSettings));
-      } catch (error) {
-        // localStorage might not be available, but we can still proceed
-        console.log('Could not save settings:', error);
-      }
-      
-      showMainForm();
-    }
-
-    function showMainForm() {
-      document.getElementById('apiSetup').classList.add('hidden');
-      document.getElementById('mainForm').classList.remove('hidden');
-    }
-
-    function getCurrentUserEmail() {
-      // This would need to be implemented based on how you get user info
-      // For now, return null
-      return null;
-    }
-
-    function showError(message) {
-      const errorEl = document.getElementById('errorMessage');
-      errorEl.textContent = message;
-      errorEl.classList.remove('hidden');
-      
-      // Hide success message
-      document.getElementById('successMessage').classList.add('hidden');
-    }
-
-    function showSuccess(message) {
-      const successEl = document.getElementById('successMessage');
-      successEl.textContent = message;
-      successEl.classList.remove('hidden');
-      
-      // Hide error message
-      document.getElementById('errorMessage').classList.add('hidden');
-    }
-
-    function hideMessages() {
-      document.getElementById('errorMessage').classList.add('hidden');
-      document.getElementById('successMessage').classList.add('hidden');
-    }
-
-    function updateSelectionInfo(selection, link) {
-      const infoEl = document.getElementById('selectionInfo');
-      
-      if (selection && selection.length > 0) {
-        const item = selection[0];
-        document.getElementById('selectionName').textContent = `Name: ${item.name}`;
-        document.getElementById('selectionType').textContent = `Type: ${item.type}`;
-        document.getElementById('selectionDimensions').textContent = `Size: ${Math.round(item.width)} × ${Math.round(item.height)}px`;
-        
-        // Pre-fill component name if empty
-        const nameInput = document.getElementById('componentName');
-        if (!nameInput.value) {
-          nameInput.value = item.name;
-        }
-        
-        infoEl.classList.remove('hidden');
-        currentSelection = item;
-        currentFigmaLink = link;
-      } else {
-        infoEl.classList.add('hidden');
-        currentSelection = null;
-        currentFigmaLink = null;
-      }
+      pluginUI.saveApiSettings()
     }
 
     function createRequest() {
-      hideMessages();
-      
-      if (!apiSettings || !apiSettings.endpoint || !apiSettings.key) {
-        showError('API settings are required. Please configure them first.');
-        return;
-      }
-      
-      if (!currentSelection) {
-        showError('Please select a Frame or Component first');
-        return;
-      }
-      
-      // Get form values
-      const category = document.getElementById('category').value;
-      const priority = document.getElementById('priority').value;
-      const componentName = document.getElementById('componentName').value.trim();
-      const requesterName = document.getElementById('requesterName').value.trim();
-      const requesterEmail = document.getElementById('requesterEmail').value.trim();
-      const description = document.getElementById('description').value.trim();
-      
-      // Validate required fields
-      if (!category || !priority || !componentName || !requesterName || !requesterEmail || !description) {
-        showError('Please fill in all required fields');
-        return;
-      }
-      
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(requesterEmail)) {
-        showError('Please enter a valid email address');
-        return;
-      }
-      
-      // Show loading state
-      document.getElementById('actionButtons').classList.add('hidden');
-      document.getElementById('loadingState').classList.remove('hidden');
-      
-      // Send request to plugin code
-      const requestData = {
-        apiKey: apiSettings.key,
-        apiEndpoint: apiSettings.endpoint,
-        category,
-        priority,
-        componentName,
-        requesterName,
-        requesterEmail,
-        description,
-        selection: currentSelection,
-        figmaLink: currentFigmaLink
-      };
-      
-      parent.postMessage({ pluginMessage: { type: 'create-request', data: requestData } }, '*');
+      pluginUI.createRequest()
     }
 
     function clearForm() {
-      document.getElementById('category').value = '';
-      document.getElementById('priority').value = '';
-      document.getElementById('componentName').value = '';
-      document.getElementById('requesterName').value = '';
-      document.getElementById('description').value = '';
-      hideMessages();
+      pluginUI.clearForm()
     }
 
-    function resetLoadingState() {
-      document.getElementById('actionButtons').classList.remove('hidden');
-      document.getElementById('loadingState').classList.add('hidden');
-    }
-
-    // Handle messages from plugin code
-    window.onmessage = (event) => {
-      const { type, data, link, error } = event.data.pluginMessage || {};
+    // Add event listeners for form validation
+    document.addEventListener('DOMContentLoaded', function() {
+      pluginUI.init()
       
-      switch (type) {
-        case 'selection-updated':
-          if (error) {
-            showError(error);
-            updateSelectionInfo(null, null);
-          } else {
-            hideMessages();
-            updateSelectionInfo(data, link);
-          }
-          break;
-          
-        case 'request-success':
-          resetLoadingState();
-          showSuccess(`Request created successfully! ID: ${data.id || 'Unknown'}`);
-          clearForm();
-          break;
-          
-        case 'request-error':
-          resetLoadingState();
-          showError(`Failed to create request: ${error}`);
-          break;
-      }
-    };
-
-    // Initialize when page loads
-    init();
+      // Add input event listeners for form validation
+      const inputs = document.querySelectorAll('input, textarea, select')
+      inputs.forEach(input => {
+        input.addEventListener('input', () => pluginUI.checkFormValidity())
+      })
+    })
   </script>
 </body>
 </html>

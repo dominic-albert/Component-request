@@ -1,4 +1,4 @@
-// Figma Plugin Main Code
+// Figma Plugin Main Code - Clean implementation
 const figma = window.figma // Declare figma variable
 const __html__ = "<div>Your UI HTML here</div>" // Declare __html__ variable
 
@@ -8,24 +8,28 @@ figma.showUI(__html__, {
   themeColors: true,
 })
 
-// Store current selection
-let currentSelection = []
-let currentFigmaLink = null
-
-// Initialize plugin
-async function init() {
-  updateSelection()
-
-  // Listen for selection changes
-  figma.on("selectionchange", updateSelection)
+// Plugin state
+const pluginState = {
+  currentSelection: [],
+  currentFigmaLink: null,
 }
 
-function updateSelection() {
+// Initialize plugin
+function initializePlugin() {
+  updateSelectionState()
+  figma.on("selectionchange", updateSelectionState)
+}
+
+function updateSelectionState() {
   const selection = figma.currentPage.selection
 
-  // Check if selection is valid (Frame or Component)
+  // Reset state
+  pluginState.currentSelection = []
+  pluginState.currentFigmaLink = null
+
+  // Check if selection is valid
   if (selection.length === 0) {
-    figma.ui.postMessage({
+    sendToUI({
       type: "selection-updated",
       data: null,
       link: null,
@@ -35,7 +39,7 @@ function updateSelection() {
   }
 
   if (selection.length > 1) {
-    figma.ui.postMessage({
+    sendToUI({
       type: "selection-updated",
       data: null,
       link: null,
@@ -44,45 +48,47 @@ function updateSelection() {
     return
   }
 
-  const node = selection[0]
+  const selectedNode = selection[0]
 
   // Validate node type
-  if (node.type !== "FRAME" && node.type !== "COMPONENT" && node.type !== "COMPONENT_SET") {
-    figma.ui.postMessage({
+  if (selectedNode.type !== "FRAME" && selectedNode.type !== "COMPONENT" && selectedNode.type !== "COMPONENT_SET") {
+    sendToUI({
       type: "selection-updated",
       data: null,
       link: null,
-      error: `Invalid selection: "${node.name}" is a ${node.type}. Please select a Frame or Component.`,
+      error: `Invalid selection: "${selectedNode.name}" is a ${selectedNode.type}. Please select a Frame or Component.`,
     })
     return
   }
 
   // Create selection data
-  currentSelection = [
-    {
-      id: node.id,
-      name: node.name,
-      type: node.type,
-      width: node.width,
-      height: node.height,
-      fills: node.fills || [],
-      effects: node.effects || [],
-    },
-  ]
+  const selectionData = {
+    id: selectedNode.id,
+    name: selectedNode.name,
+    type: selectedNode.type,
+    width: selectedNode.width,
+    height: selectedNode.height,
+    fills: selectedNode.fills || [],
+    effects: selectedNode.effects || [],
+  }
 
   // Generate Figma link
-  currentFigmaLink = generateFigmaLink(node)
+  const figmaLink = createFigmaLink(selectedNode)
+
+  // Update state
+  pluginState.currentSelection = [selectionData]
+  pluginState.currentFigmaLink = figmaLink
 
   // Send valid selection to UI
-  figma.ui.postMessage({
+  sendToUI({
     type: "selection-updated",
-    data: currentSelection,
-    link: currentFigmaLink,
+    data: pluginState.currentSelection,
+    link: pluginState.currentFigmaLink,
     error: null,
   })
 }
 
-function generateFigmaLink(node) {
+function createFigmaLink(node) {
   try {
     const fileKey = figma.fileKey
     if (!fileKey) {
@@ -90,24 +96,20 @@ function generateFigmaLink(node) {
       return null
     }
 
-    // Generate the Figma link with node ID
-    const link = `https://www.figma.com/file/${fileKey}?node-id=${encodeURIComponent(node.id)}`
-    return link
+    return `https://www.figma.com/file/${fileKey}?node-id=${encodeURIComponent(node.id)}`
   } catch (error) {
     console.error("Failed to generate Figma link:", error)
     return null
   }
 }
 
-async function exportSelectionAsImage(node) {
+async function exportNodeImage(node) {
   try {
-    // Export as PNG with 2x scale for better quality
     const imageBytes = await node.exportAsync({
       format: "PNG",
       constraint: { type: "SCALE", value: 2 },
     })
 
-    // Convert to base64
     const base64 = figma.base64Encode(imageBytes)
     return `data:image/png;base64,${base64}`
   } catch (error) {
@@ -116,10 +118,11 @@ async function exportSelectionAsImage(node) {
   }
 }
 
-async function createComponentRequest(requestData) {
+async function handleCreateRequest(requestData) {
   try {
     const {
       apiKey,
+      apiEndpoint,
       category,
       priority,
       componentName,
@@ -128,16 +131,11 @@ async function createComponentRequest(requestData) {
       description,
       selection,
       figmaLink,
-      apiEndpoint,
     } = requestData
 
     // Validate required fields
-    if (!apiKey) {
-      throw new Error("API key is required")
-    }
-
-    if (!apiEndpoint) {
-      throw new Error("API endpoint is required")
+    if (!apiKey || !apiEndpoint) {
+      throw new Error("API key and endpoint are required")
     }
 
     // Get the selected node for image export
@@ -147,20 +145,20 @@ async function createComponentRequest(requestData) {
     }
 
     // Export selection as image
-    const imageData = await exportSelectionAsImage(selectedNode)
+    const imageData = await exportNodeImage(selectedNode)
 
     // Get current file info
     const fileKey = figma.fileKey || "unknown"
     const fileName = figma.root.name || "Untitled"
 
-    // Prepare request payload matching your dashboard structure
+    // Prepare request payload
     const payload = {
       requestName: componentName,
       justification: description,
       requesterName,
       requesterEmail,
       category,
-      severity: priority, // Maps to priority in your dashboard
+      severity: priority,
       figmaLink: figmaLink || "",
       figmaFileKey: fileKey,
       figmaFileName: fileName,
@@ -168,10 +166,10 @@ async function createComponentRequest(requestData) {
       selectionData: selection,
       imageData,
       source: "figma-plugin",
-      project: "Figma Plugin", // You can customize this
+      project: "Figma Plugin",
     }
 
-    // Make API request to user's dashboard
+    // Make API request
     const response = await fetch(apiEndpoint, {
       method: "POST",
       headers: {
@@ -189,26 +187,26 @@ async function createComponentRequest(requestData) {
 
     const result = await response.json()
 
-    // Send success message to UI
-    figma.ui.postMessage({
+    // Send success message
+    sendToUI({
       type: "request-success",
       data: result,
     })
 
-    // Show notification in Figma
+    // Show notification
     figma.notify(`✅ Component request "${componentName}" created successfully!`, {
       timeout: 4000,
     })
   } catch (error) {
     console.error("Failed to create request:", error)
 
-    // Send error message to UI
-    figma.ui.postMessage({
+    // Send error message
+    sendToUI({
       type: "request-error",
       error: error.message,
     })
 
-    // Show error notification in Figma
+    // Show error notification
     figma.notify(`❌ Failed to create request: ${error.message}`, {
       timeout: 5000,
       error: true,
@@ -216,15 +214,19 @@ async function createComponentRequest(requestData) {
   }
 }
 
+function sendToUI(message) {
+  figma.ui.postMessage(message)
+}
+
 // Handle messages from UI
 figma.ui.onmessage = async (msg) => {
   switch (msg.type) {
     case "get-selection":
-      updateSelection()
+      updateSelectionState()
       break
 
     case "create-request":
-      await createComponentRequest(msg.data)
+      await handleCreateRequest(msg.data)
       break
 
     case "close-plugin":
@@ -234,4 +236,4 @@ figma.ui.onmessage = async (msg) => {
 }
 
 // Initialize the plugin
-init()
+initializePlugin()
