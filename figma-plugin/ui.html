@@ -207,6 +207,17 @@
       color: #92400e;
       margin-bottom: 8px;
     }
+
+    .example-endpoint {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      padding: 8px;
+      margin: 8px 0;
+      font-family: monospace;
+      font-size: 10px;
+      color: #374151;
+    }
   </style>
 </head>
 <body>
@@ -223,12 +234,15 @@
       
       <div class="form-group">
         <label for="apiEndpoint">Dashboard API Endpoint *</label>
-        <input type="url" id="apiEndpoint" placeholder="https://your-dashboard.com/api/requests" required>
+        <input type="url" id="apiEndpoint" placeholder="https://your-dashboard.vercel.app/api/requests" required>
+        <div class="example-endpoint">
+          Example: https://your-app.vercel.app/api/requests
+        </div>
       </div>
       
       <div class="form-group">
         <label for="apiKey">API Key *</label>
-        <input type="password" id="apiKey" placeholder="Enter your API key" required>
+        <input type="password" id="apiKey" placeholder="Enter your API key from dashboard" required>
       </div>
       
       <button class="button" onclick="saveApiSettings()">Save Settings</button>
@@ -312,29 +326,36 @@
   </div>
 
   <script>
-    // Plugin UI JavaScript
-    let currentSelection = null;
-    let currentFigmaLink = null;
-    let apiSettings = null;
-
-    // Use in-memory storage instead of localStorage to avoid security errors
-    let formData = {
-      apiEndpoint: '',
-      apiKey: '',
-      category: '',
-      priority: '',
-      componentName: '',
-      requesterName: '',
-      requesterEmail: '',
-      description: ''
+    // Plugin UI JavaScript - Fixed version without localStorage
+    
+    // Use global variables instead of localStorage to avoid security errors
+    window.pluginData = {
+      currentSelection: null,
+      currentFigmaLink: null,
+      apiSettings: null,
+      formData: {
+        apiEndpoint: '',
+        apiKey: '',
+        category: '',
+        priority: '',
+        componentName: '',
+        requesterName: '',
+        requesterEmail: '',
+        description: ''
+      }
     };
 
     function init() {
       setupEventListeners();
-      parent.postMessage({ pluginMessage: { type: 'get-selection' } }, '*');
+      requestSelectionUpdate();
     }
 
     function setupEventListeners() {
+      // Listen for messages from plugin code
+      window.addEventListener('message', (event) => {
+        handlePluginMessage(event.data.pluginMessage);
+      });
+
       // Form inputs
       const inputs = document.querySelectorAll('input, textarea, select');
       inputs.forEach(input => {
@@ -346,49 +367,93 @@
     function saveFormDataToMemory() {
       const inputs = document.querySelectorAll('input, textarea, select');
       inputs.forEach(input => {
-        if (input.id) {
-          formData[input.id] = input.value;
+        if (input.id && window.pluginData.formData.hasOwnProperty(input.id)) {
+          window.pluginData.formData[input.id] = input.value;
         }
       });
     }
 
     function loadFormDataFromMemory() {
-      Object.keys(formData).forEach(key => {
+      Object.keys(window.pluginData.formData).forEach(key => {
         const element = document.getElementById(key);
-        if (element && formData[key]) {
-          element.value = formData[key];
+        if (element && window.pluginData.formData[key]) {
+          element.value = window.pluginData.formData[key];
         }
       });
     }
 
-    function saveApiSettings() {
-      const endpoint = document.getElementById('apiEndpoint').value.trim();
-      const key = document.getElementById('apiKey').value.trim();
-      
-      if (!endpoint || !key) {
-        showError('Please enter both API endpoint and API key');
-        return;
-      }
-      
-      try {
-        new URL(endpoint);
-      } catch (error) {
-        showError('Please enter a valid API endpoint URL');
-        return;
-      }
-      
-      apiSettings = { endpoint, key };
-      formData.apiEndpoint = endpoint;
-      formData.apiKey = key;
-      
-      showMainForm();
+    function requestSelectionUpdate() {
+      sendToPlugin({ type: 'get-selection' });
     }
 
-    function showMainForm() {
-      document.getElementById('apiSetup').classList.add('hidden');
-      document.getElementById('mainForm').classList.remove('hidden');
-      loadFormDataFromMemory();
+    function sendToPlugin(message) {
+      parent.postMessage({ pluginMessage: message }, '*');
+    }
+
+    function handlePluginMessage(message) {
+      if (!message) return;
+
+      const { type, data, link, error } = message;
+
+      switch (type) {
+        case 'selection-updated':
+          updateSelectionInfo(data, link, error);
+          break;
+          
+        case 'request-success':
+          handleRequestSuccess(data);
+          break;
+          
+        case 'request-error':
+          handleRequestError(error);
+          break;
+      }
+    }
+
+    function updateSelectionInfo(selection, link, error) {
+      const infoEl = document.getElementById('selectionInfo');
+      
+      hideMessages();
+      
+      if (error) {
+        showError(error);
+        infoEl.classList.add('hidden');
+        window.pluginData.currentSelection = null;
+        window.pluginData.currentFigmaLink = null;
+      } else if (selection && selection.length > 0) {
+        const item = selection[0];
+        document.getElementById('selectionName').textContent = `Name: ${item.name}`;
+        document.getElementById('selectionType').textContent = `Type: ${item.type}`;
+        document.getElementById('selectionDimensions').textContent = `Size: ${Math.round(item.width)} × ${Math.round(item.height)}px`;
+        
+        // Pre-fill component name if empty
+        const nameInput = document.getElementById('componentName');
+        if (!nameInput.value) {
+          nameInput.value = item.name;
+          window.pluginData.formData.componentName = item.name;
+        }
+        
+        infoEl.classList.remove('hidden');
+        window.pluginData.currentSelection = item;
+        window.pluginData.currentFigmaLink = link;
+      } else {
+        infoEl.classList.add('hidden');
+        window.pluginData.currentSelection = null;
+        window.pluginData.currentFigmaLink = null;
+      }
+
       checkFormValidity();
+    }
+
+    function handleRequestSuccess(data) {
+      resetLoadingState();
+      showSuccess(`Request created successfully! ID: ${data.id || 'Unknown'}`);
+      clearForm();
+    }
+
+    function handleRequestError(error) {
+      resetLoadingState();
+      showError(`Failed to create request: ${error}`);
     }
 
     function showError(message) {
@@ -410,34 +475,39 @@
       document.getElementById('successMessage').classList.add('hidden');
     }
 
-    function updateSelectionInfo(selection, link) {
-      const infoEl = document.getElementById('selectionInfo');
+    function saveApiSettings() {
+      const endpoint = document.getElementById('apiEndpoint').value.trim();
+      const key = document.getElementById('apiKey').value.trim();
       
-      if (selection && selection.length > 0) {
-        const item = selection[0];
-        document.getElementById('selectionName').textContent = `Name: ${item.name}`;
-        document.getElementById('selectionType').textContent = `Type: ${item.type}`;
-        document.getElementById('selectionDimensions').textContent = `Size: ${Math.round(item.width)} × ${Math.round(item.height)}px`;
-        
-        const nameInput = document.getElementById('componentName');
-        if (!nameInput.value) {
-          nameInput.value = item.name;
-          formData.componentName = item.name;
-        }
-        
-        infoEl.classList.remove('hidden');
-        currentSelection = item;
-        currentFigmaLink = link;
-      } else {
-        infoEl.classList.add('hidden');
-        currentSelection = null;
-        currentFigmaLink = null;
+      if (!endpoint || !key) {
+        showError('Please enter both API endpoint and API key');
+        return;
       }
+      
+      // Validate URL format
+      try {
+        new URL(endpoint);
+      } catch (error) {
+        showError('Please enter a valid API endpoint URL');
+        return;
+      }
+      
+      window.pluginData.apiSettings = { endpoint, key };
+      window.pluginData.formData.apiEndpoint = endpoint;
+      window.pluginData.formData.apiKey = key;
+      
+      showMainForm();
+    }
+
+    function showMainForm() {
+      document.getElementById('apiSetup').classList.add('hidden');
+      document.getElementById('mainForm').classList.remove('hidden');
+      loadFormDataFromMemory();
+      checkFormValidity();
     }
 
     function checkFormValidity() {
-      if (!apiSettings) return;
-      
+      const apiValid = window.pluginData.apiSettings && window.pluginData.apiSettings.endpoint && window.pluginData.apiSettings.key;
       const category = document.getElementById('category').value;
       const priority = document.getElementById('priority').value;
       const componentName = document.getElementById('componentName').value.trim();
@@ -445,9 +515,9 @@
       const requesterEmail = document.getElementById('requesterEmail').value.trim();
       const description = document.getElementById('description').value.trim();
 
-      const isFormValid = category && priority && componentName && 
+      const isFormValid = apiValid && category && priority && componentName && 
                          requesterName && requesterEmail && description && 
-                         currentSelection;
+                         window.pluginData.currentSelection;
 
       document.getElementById('createButton').disabled = !isFormValid;
     }
@@ -455,16 +525,17 @@
     function createRequest() {
       hideMessages();
       
-      if (!apiSettings || !apiSettings.endpoint || !apiSettings.key) {
+      if (!window.pluginData.apiSettings || !window.pluginData.apiSettings.endpoint || !window.pluginData.apiSettings.key) {
         showError('API settings are required. Please configure them first.');
         return;
       }
       
-      if (!currentSelection) {
+      if (!window.pluginData.currentSelection) {
         showError('Please select a Frame or Component first');
         return;
       }
       
+      // Get form values
       const category = document.getElementById('category').value;
       const priority = document.getElementById('priority').value;
       const componentName = document.getElementById('componentName').value.trim();
@@ -472,34 +543,37 @@
       const requesterEmail = document.getElementById('requesterEmail').value.trim();
       const description = document.getElementById('description').value.trim();
       
+      // Validate required fields
       if (!category || !priority || !componentName || !requesterName || !requesterEmail || !description) {
         showError('Please fill in all required fields');
         return;
       }
       
+      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(requesterEmail)) {
         showError('Please enter a valid email address');
         return;
       }
       
-      document.getElementById('actionButtons').classList.add('hidden');
-      document.getElementById('loadingState').classList.remove('hidden');
+      // Show loading state
+      setLoadingState(true);
       
+      // Send request to plugin code
       const requestData = {
-        apiKey: apiSettings.key,
-        apiEndpoint: apiSettings.endpoint,
+        apiKey: window.pluginData.apiSettings.key,
+        apiEndpoint: window.pluginData.apiSettings.endpoint,
         category,
         priority,
         componentName,
         requesterName,
         requesterEmail,
         description,
-        selection: currentSelection,
-        figmaLink: currentFigmaLink
+        selection: window.pluginData.currentSelection,
+        figmaLink: window.pluginData.currentFigmaLink
       };
       
-      parent.postMessage({ pluginMessage: { type: 'create-request', data: requestData } }, '*');
+      sendToPlugin({ type: 'create-request', data: requestData });
     }
 
     function clearForm() {
@@ -510,49 +584,35 @@
       document.getElementById('description').value = '';
       
       // Clear from memory too
-      formData.category = '';
-      formData.priority = '';
-      formData.componentName = '';
-      formData.requesterName = '';
-      formData.description = '';
+      window.pluginData.formData.category = '';
+      window.pluginData.formData.priority = '';
+      window.pluginData.formData.componentName = '';
+      window.pluginData.formData.requesterName = '';
+      window.pluginData.formData.description = '';
       
       hideMessages();
       checkFormValidity();
     }
 
-    function resetLoadingState() {
-      document.getElementById('actionButtons').classList.remove('hidden');
-      document.getElementById('loadingState').classList.add('hidden');
+    function setLoadingState(isLoading) {
+      const actionButtons = document.getElementById('actionButtons');
+      const loadingState = document.getElementById('loadingState');
+      
+      if (isLoading) {
+        actionButtons.classList.add('hidden');
+        loadingState.classList.remove('hidden');
+      } else {
+        actionButtons.classList.remove('hidden');
+        loadingState.classList.add('hidden');
+      }
     }
 
-    window.onmessage = (event) => {
-      const { type, data, link, error } = event.data.pluginMessage || {};
-      
-      switch (type) {
-        case 'selection-updated':
-          if (error) {
-            showError(error);
-            updateSelectionInfo(null, null);
-          } else {
-            hideMessages();
-            updateSelectionInfo(data, link);
-          }
-          checkFormValidity();
-          break;
-          
-        case 'request-success':
-          resetLoadingState();
-          showSuccess(`Request created successfully! ID: ${data.id || 'Unknown'}`);
-          clearForm();
-          break;
-          
-        case 'request-error':
-          resetLoadingState();
-          showError(`Failed to create request: ${error}`);
-          break;
-      }
-    };
+    function resetLoadingState() {
+      setLoadingState(false);
+      checkFormValidity();
+    }
 
+    // Initialize the plugin UI
     init();
   </script>
 </body>

@@ -39,24 +39,20 @@ interface ComponentRequestDashboardProps {
 
 interface ComponentRequest {
   id: string
-  requestName: string
+  request_name: string
   justification: string
-  requesterId: string
-  requesterName: string
-  requesterEmail: string
+  requester_id: string
+  requester_name: string
+  requester_email: string
   status: "Pending" | "In Progress" | "Completed"
-  denialReason: string
-  requestedAt: string
-  updatedAt: string
-  frameData: {
-    fileId: string
-    nodeId: string
-    thumbnailUrl: string
-  }
+  denial_reason: string
+  created_at: string
+  updated_at: string
+  figma_link: string
   project: string
   severity: "Low" | "Medium" | "High" | "Urgent"
   category: "Form" | "Navigation" | "Display" | "Input" | "Layout"
-  figmaLink: string
+  image_data?: string
 }
 
 const statusColors = {
@@ -115,15 +111,19 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
   const loadRequests = async () => {
     try {
       setLoading(true)
-      // Replace with your actual API endpoint
-      // const response = await fetch('/api/requests')
-      // const data = await response.json()
-      // setRequests(data)
-
-      // For now, start with empty array
-      setRequests([])
+      const response = await fetch("/api/requests")
+      if (response.ok) {
+        const data = await response.json()
+        setRequests(data)
+      } else {
+        console.error("Failed to load requests:", response.statusText)
+        // Start with empty array if API fails
+        setRequests([])
+      }
     } catch (error) {
       console.error("Failed to load requests:", error)
+      // Start with empty array if API fails
+      setRequests([])
     } finally {
       setLoading(false)
     }
@@ -150,8 +150,8 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       const matchesStatus = statusFilter === "all" || request.status === statusFilter
       const matchesCategory = categoryFilter === "all" || request.category === categoryFilter
       const matchesSearch =
-        request.requestName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        request.requesterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.request_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.requester_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         request.id.toLowerCase().includes(searchTerm.toLowerCase())
       return matchesStatus && matchesCategory && matchesSearch
     })
@@ -164,8 +164,8 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       if (statusDiff !== 0) return statusDiff
 
       // Within same status, sort by date
-      const dateA = new Date(a.requestedAt).getTime()
-      const dateB = new Date(b.requestedAt).getTime()
+      const dateA = new Date(a.created_at).getTime()
+      const dateB = new Date(b.created_at).getTime()
 
       if (a.status === "Completed") {
         return dateA - dateB // Completed: oldest first
@@ -187,29 +187,23 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
     if (!selectedRequest) return
 
     try {
-      // Replace with your actual API endpoint
-      // await fetch(`/api/requests/${selectedRequest.id}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     status: updateStatus,
-      //     denialReason: updateStatus === "Denied" ? denialReason : "",
-      //   })
-      // })
-
-      const updatedRequests = requests.map((request) => {
-        if (request.id === selectedRequest.id) {
-          return {
-            ...request,
-            status: updateStatus as ComponentRequest["status"],
-            denialReason: updateStatus === "Denied" ? denialReason : "",
-            updatedAt: new Date().toISOString(),
-          }
-        }
-        return request
+      const response = await fetch(`/api/requests/${selectedRequest.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: updateStatus,
+          denial_reason: updateStatus === "Denied" ? denialReason : "",
+        }),
       })
 
-      setRequests(updatedRequests)
+      if (response.ok) {
+        const updatedRequest = await response.json()
+        const updatedRequests = requests.map((request) =>
+          request.id === selectedRequest.id ? updatedRequest : request,
+        )
+        setRequests(updatedRequests)
+      }
+
       setIsUpdateDialogOpen(false)
       setSelectedRequest(null)
       setUpdateStatus("")
@@ -232,36 +226,29 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
 
   const handleManualRequestSubmit = async () => {
     try {
-      const newRequest: ComponentRequest = {
-        id: generateNextId(),
+      const newRequest = {
         requestName: manualRequestForm.requestName,
         justification: manualRequestForm.justification,
-        requesterId: `manual_${Date.now()}`,
         requesterName: manualRequestForm.requesterName,
         requesterEmail: manualRequestForm.requesterEmail,
-        status: "Pending",
-        denialReason: "",
-        requestedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        frameData: {
-          fileId: "",
-          nodeId: "",
-          thumbnailUrl: "/placeholder.svg?height=200&width=300&text=Manual+Request",
-        },
-        severity: manualRequestForm.severity as ComponentRequest["severity"],
-        category: manualRequestForm.category as ComponentRequest["category"],
-        project: "Manual",
+        severity: manualRequestForm.severity,
+        category: manualRequestForm.category,
         figmaLink: manualRequestForm.figmaLink,
+        source: "manual",
+        project: "Manual",
       }
 
-      // Replace with your actual API endpoint
-      // await fetch('/api/requests', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(newRequest)
-      // })
+      const response = await fetch("/api/requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newRequest),
+      })
 
-      setRequests([newRequest, ...requests])
+      if (response.ok) {
+        const createdRequest = await response.json()
+        setRequests([createdRequest, ...requests])
+      }
+
       setIsManualRequestOpen(false)
       setManualRequestForm({
         requestName: "",
@@ -279,13 +266,14 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
 
   const handleDeleteRequest = async (requestId: string) => {
     try {
-      // Replace with your actual API endpoint
-      // await fetch(`/api/requests/${requestId}`, {
-      //   method: 'DELETE'
-      // })
+      const response = await fetch(`/api/requests/${requestId}`, {
+        method: "DELETE",
+      })
 
-      const updatedRequests = requests.filter((r) => r.id !== requestId)
-      setRequests(updatedRequests)
+      if (response.ok) {
+        const updatedRequests = requests.filter((r) => r.id !== requestId)
+        setRequests(updatedRequests)
+      }
     } catch (error) {
       console.error("Failed to delete request:", error)
     }
@@ -299,14 +287,27 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
     })
   }
 
-  const generateApiKey = () => {
+  const generateApiKey = async () => {
     setIsGeneratingKey(true)
-    // Simulate API key generation
-    setTimeout(() => {
-      const newKey = `crs_${user.email.split("@")[0]}_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 9)}`
-      setApiKey(newKey)
+    try {
+      const response = await fetch("/api/api-keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.email,
+          name: getUserName(user.email),
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setApiKey(data.apiKey)
+      }
+    } catch (error) {
+      console.error("Failed to generate API key:", error)
+    } finally {
       setIsGeneratingKey(false)
-    }, 1500)
+    }
   }
 
   if (loading) {
@@ -583,11 +584,11 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                               <div className="text-sm font-mono text-slate-300">{request.id}</div>
                             </TableCell>
                             <TableCell className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-white">{request.requestName}</div>
+                              <div className="text-sm font-medium text-white">{request.request_name}</div>
                             </TableCell>
                             <TableCell className="px-6 py-4 whitespace-nowrap">
                               <div className="flex flex-col">
-                                <div className="text-sm text-white">{request.requesterName}</div>
+                                <div className="text-sm text-white">{request.requester_name}</div>
                                 <div className="text-xs bg-white/10 px-2 py-1 rounded-full w-fit mt-1 text-white">
                                   {request.project}
                                 </div>
@@ -612,7 +613,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                               </span>
                             </TableCell>
                             <TableCell className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm text-slate-300">{formatDate(request.requestedAt)}</span>
+                              <span className="text-sm text-slate-300">{formatDate(request.created_at)}</span>
                             </TableCell>
                             <TableCell className="px-6 py-4 whitespace-nowrap text-center">
                               <Button
@@ -621,7 +622,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                                 onClick={() => {
                                   setSelectedRequest(request)
                                   setUpdateStatus(request.status)
-                                  setDenialReason(request.denialReason)
+                                  setDenialReason(request.denial_reason)
                                   setIsUpdateDialogOpen(true)
                                 }}
                                 className="px-4 py-2 text-xs border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg"
@@ -668,11 +669,11 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-blue-500/20">
                                       <DialogHeader className="px-6 py-4 border-b border-white/10">
                                         <DialogTitle className="text-xl font-semibold text-white">
-                                          {request.requestName}
+                                          {request.request_name}
                                         </DialogTitle>
                                         <DialogDescription className="text-slate-300">
-                                          {request.id} • Requested by {request.requesterName} on{" "}
-                                          {formatDate(request.requestedAt)}
+                                          {request.id} • Requested by {request.requester_name} on{" "}
+                                          {formatDate(request.created_at)}
                                         </DialogDescription>
                                       </DialogHeader>
                                       <div className="px-6 py-4 space-y-4">
@@ -703,7 +704,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                                         </div>
                                         <div>
                                           <Label className="text-sm font-medium text-slate-300">Requester email</Label>
-                                          <p className="mt-1 text-sm text-white">{request.requesterEmail}</p>
+                                          <p className="mt-1 text-sm text-white">{request.requester_email}</p>
                                         </div>
                                         <div>
                                           <Label className="text-sm font-medium text-slate-300">Project</Label>
@@ -713,17 +714,17 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                                             </span>
                                           </div>
                                         </div>
-                                        {request.figmaLink && (
+                                        {request.figma_link && (
                                           <div>
                                             <Label className="text-sm font-medium text-slate-300">Figma link</Label>
                                             <div className="mt-1">
                                               <a
-                                                href={request.figmaLink}
+                                                href={request.figma_link}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-sm text-blue-400 hover:text-blue-300 underline transition-colors duration-200"
                                               >
-                                                {request.figmaLink}
+                                                {request.figma_link}
                                               </a>
                                             </div>
                                           </div>
@@ -732,13 +733,13 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                                           <Label className="text-sm font-medium text-slate-300">Description</Label>
                                           <p className="mt-1 text-sm text-white">{request.justification}</p>
                                         </div>
-                                        {request.frameData?.thumbnailUrl && (
+                                        {request.image_data && (
                                           <div>
                                             <Label className="text-sm font-medium text-slate-300">Design preview</Label>
                                             <div className="mt-2">
                                               <img
-                                                src={request.frameData.thumbnailUrl || "/placeholder.svg"}
-                                                alt={`Preview of ${request.requestName}`}
+                                                src={request.image_data || "/placeholder.svg"}
+                                                alt={`Preview of ${request.request_name}`}
                                                 className="rounded-lg border border-white/20 max-w-full h-auto"
                                               />
                                             </div>
@@ -872,7 +873,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
             <DialogHeader className="px-6 py-4 border-b border-white/10">
               <DialogTitle className="text-xl font-semibold text-white">Update request status</DialogTitle>
               <DialogDescription className="text-slate-300">
-                Update the status of "{selectedRequest?.requestName}"
+                Update the status of "{selectedRequest?.request_name}"
               </DialogDescription>
             </DialogHeader>
             <div className="px-6 py-4 space-y-4">
@@ -916,7 +917,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
             <DialogHeader className="px-6 py-4 border-b border-white/10">
               <DialogTitle className="text-xl font-semibold text-white">Edit request</DialogTitle>
               <DialogDescription className="text-slate-300">
-                Edit the details of "{selectedRequest?.requestName}"
+                Edit the details of "{selectedRequest?.request_name}"
               </DialogDescription>
             </DialogHeader>
             <div className="px-6 py-4 space-y-6">
@@ -934,7 +935,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                           ? {
                               ...r,
                               category: value as ComponentRequest["category"],
-                              updatedAt: new Date().toISOString(),
+                              updated_at: new Date().toISOString(),
                             }
                           : r,
                       )
@@ -967,7 +968,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                           ? {
                               ...r,
                               severity: value as ComponentRequest["severity"],
-                              updatedAt: new Date().toISOString(),
+                              updated_at: new Date().toISOString(),
                             }
                           : r,
                       )
@@ -995,20 +996,20 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                 <Input
                   id="edit-component-name"
                   placeholder="e.g., Advanced Data Table, Multi-step Form Wizard"
-                  value={selectedRequest?.requestName || ""}
+                  value={selectedRequest?.request_name || ""}
                   onChange={(e) => {
                     if (!selectedRequest) return
                     const updatedRequests = requests.map((r) =>
                       r.id === selectedRequest.id
                         ? {
                             ...r,
-                            requestName: e.target.value,
-                            updatedAt: new Date().toISOString(),
+                            request_name: e.target.value,
+                            updated_at: new Date().toISOString(),
                           }
                         : r,
                     )
                     setRequests(updatedRequests)
-                    setSelectedRequest({ ...selectedRequest, requestName: e.target.value })
+                    setSelectedRequest({ ...selectedRequest, request_name: e.target.value })
                   }}
                   className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm mt-1"
                 />
@@ -1029,7 +1030,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                         ? {
                             ...r,
                             justification: e.target.value,
-                            updatedAt: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
                           }
                         : r,
                     )
@@ -1048,20 +1049,20 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   id="edit-figma-link"
                   type="url"
                   placeholder="https://figma.com/file/..."
-                  value={selectedRequest?.figmaLink || ""}
+                  value={selectedRequest?.figma_link || ""}
                   onChange={(e) => {
                     if (!selectedRequest) return
                     const updatedRequests = requests.map((r) =>
                       r.id === selectedRequest.id
                         ? {
                             ...r,
-                            figmaLink: e.target.value,
-                            updatedAt: new Date().toISOString(),
+                            figma_link: e.target.value,
+                            updated_at: new Date().toISOString(),
                           }
                         : r,
                     )
                     setRequests(updatedRequests)
-                    setSelectedRequest({ ...selectedRequest, figmaLink: e.target.value })
+                    setSelectedRequest({ ...selectedRequest, figma_link: e.target.value })
                   }}
                   className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm mt-1"
                 />
