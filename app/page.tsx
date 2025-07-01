@@ -12,14 +12,8 @@ interface UserInfo {
 export default function Home() {
   const [user, setUser] = useState<UserInfo | null>(null)
 
-  const handleLogin = (email: string, password: string) => {
-    // Simple demo authentication - replace with real auth
-    if (email && password) {
-      setUser({
-        email,
-        role: "Admin", // You can determine role based on email or other logic
-      })
-    }
+  const handleLogin = (userInfo: UserInfo) => {
+    setUser(userInfo)
   }
 
   const handleLogout = () => {
