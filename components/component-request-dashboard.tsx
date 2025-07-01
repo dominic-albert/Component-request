@@ -400,10 +400,18 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
-                  <SelectItem value="all">All status</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="In Progress">In progress</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="all" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    All status
+                  </SelectItem>
+                  <SelectItem value="Pending" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    Pending
+                  </SelectItem>
+                  <SelectItem value="In Progress" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    In progress
+                  </SelectItem>
+                  <SelectItem value="Completed" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    Completed
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -411,12 +419,46 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
-                  <SelectItem value="all">All categories</SelectItem>
-                  <SelectItem value="Form">Form</SelectItem>
-                  <SelectItem value="Navigation">Navigation</SelectItem>
-                  <SelectItem value="Display">Display</SelectItem>
-                  <SelectItem value="Input">Input</SelectItem>
-                  <SelectItem value="Layout">Layout</SelectItem>
+                  <SelectItem value="all" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    All categories
+                  </SelectItem>
+                  <SelectItem value="Form" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    Form
+                  </SelectItem>
+                  <SelectItem value="Navigation" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    Navigation
+                  </SelectItem>
+                  <SelectItem value="Display" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    Display
+                  </SelectItem>
+                  <SelectItem value="Input" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    Input
+                  </SelectItem>
+                  <SelectItem value="Layout" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    Layout
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value="newest" onValueChange={() => {}}>
+                <SelectTrigger className="w-[140px] px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm [&>span]:text-white">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl">
+                  <SelectItem value="newest" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    Newest first
+                  </SelectItem>
+                  <SelectItem value="oldest" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    Oldest first
+                  </SelectItem>
+                  <SelectItem value="name-asc" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    Name A-Z
+                  </SelectItem>
+                  <SelectItem value="name-desc" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    Name Z-A
+                  </SelectItem>
+                  <SelectItem value="priority" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    Priority
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
