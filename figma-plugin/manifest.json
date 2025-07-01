@@ -4,9 +4,10 @@
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
-  "documentAccess": "dynamic-page",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "editorType": ["figma"],
   "networkAccess": {
-    "allowedDomains": ["*"]
-  },
-  "permissions": ["currentuser"]
+    "allowedDomains": ["https://your-dashboard-domain.com"]
+  }
 }
