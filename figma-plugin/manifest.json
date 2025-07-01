@@ -1,12 +1,8 @@
 {
-  "name": "Component Request System",
-  "id": "component-request-system",
+  "name": "Component Request",
+  "id": "1271824114444192941",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
-  "documentAccess": "dynamic-page",
-  "networkAccess": {
-    "allowedDomains": ["*"]
-  },
-  "permissions": ["currentuser"]
+  "editorType": ["figma", "figma"]
 }

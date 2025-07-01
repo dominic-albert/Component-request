@@ -2,7 +2,7 @@
 
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -308,6 +308,10 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       setIsGeneratingKey(false)
     }, 1500)
   }
+
+  const handleCopyApiKey = useCallback(() => {
+    navigator.clipboard.writeText(apiKey)
+  }, [apiKey])
 
   if (loading) {
     return (
@@ -1278,9 +1282,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                         className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white font-mono text-sm pr-20"
                       />
                       <Button
-                        onClick={() => {
-                          navigator.clipboard.writeText(apiKey)
-                        }}
+                        onClick={handleCopyApiKey}
                         size="sm"
                         className="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs"
                       >
