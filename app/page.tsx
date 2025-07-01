@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { LoginScreen } from "@/components/login-screen"
 import { ComponentRequestDashboard } from "@/components/component-request-dashboard"
+import { LoginScreen } from "@/components/login-screen"
 
 interface UserInfo {
   email: string
@@ -12,8 +12,14 @@ interface UserInfo {
 export default function Home() {
   const [user, setUser] = useState<UserInfo | null>(null)
 
-  const handleLogin = (userInfo: UserInfo) => {
-    setUser(userInfo)
+  const handleLogin = (email: string, password: string) => {
+    // Simple demo authentication - replace with real auth
+    if (email && password) {
+      setUser({
+        email,
+        role: "Admin", // You can determine role based on email or other logic
+      })
+    }
   }
 
   const handleLogout = () => {
@@ -24,9 +30,5 @@ export default function Home() {
     return <LoginScreen onLogin={handleLogin} />
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <ComponentRequestDashboard user={user} onLogout={handleLogout} />
-    </div>
-  )
+  return <ComponentRequestDashboard user={user} onLogout={handleLogout} />
 }

@@ -128,7 +128,17 @@ async function createComponentRequest(requestData) {
       description,
       selection,
       figmaLink,
+      apiEndpoint,
     } = requestData
+
+    // Validate required fields
+    if (!apiKey) {
+      throw new Error("API key is required")
+    }
+
+    if (!apiEndpoint) {
+      throw new Error("API endpoint is required")
+    }
 
     // Get the selected node for image export
     const selectedNode = figma.currentPage.selection[0]
@@ -161,33 +171,23 @@ async function createComponentRequest(requestData) {
       project: "Figma Plugin", // You can customize this
     }
 
-    // Replace with your actual API endpoint
-    // const response = await fetch("https://your-dashboard-api.com/api/requests", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //     "Authorization": `Bearer ${apiKey}`,
-    //     "X-Figma-Plugin": "component-request-system",
-    //   },
-    //   body: JSON.stringify(payload),
-    // })
+    // Make API request to user's dashboard
+    const response = await fetch(apiEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "X-Figma-Plugin": "component-request-system",
+      },
+      body: JSON.stringify(payload),
+    })
 
-    // if (!response.ok) {
-    //   const errorData = await response.json().catch(() => ({}))
-    //   throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
-    // }
-
-    // const result = await response.json()
-
-    // Simulate API call for now
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    // Simulate successful response
-    const result = {
-      id: `CR${String(Date.now()).slice(-4)}`,
-      message: "Component request created successfully",
-      data: payload,
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
     }
+
+    const result = await response.json()
 
     // Send success message to UI
     figma.ui.postMessage({
