@@ -39,7 +39,7 @@ interface ComponentRequestDashboardProps {
 // Mock data - replace with Firebase integration
 const mockRequests = [
   {
-    id: "1",
+    id: "CR0001",
     requestName: "Advanced Data Table",
     justification:
       "Need a sophisticated data table component with sorting, filtering, pagination, and row selection capabilities for the analytics dashboard.",
@@ -61,7 +61,7 @@ const mockRequests = [
     figmaLink: "https://figma.com/file/abc123/advanced-data-table",
   },
   {
-    id: "2",
+    id: "CR0002",
     requestName: "Multi-step Form Wizard",
     justification:
       "Complex onboarding flow requires a multi-step form component with progress indicators, validation, and step navigation.",
@@ -83,7 +83,7 @@ const mockRequests = [
     figmaLink: "https://figma.com/file/def456/multi-step-form",
   },
   {
-    id: "3",
+    id: "CR0003",
     requestName: "Interactive Dashboard Cards",
     justification:
       "Executive dashboard needs interactive cards with real-time data updates, hover effects, and drill-down capabilities.",
@@ -105,7 +105,7 @@ const mockRequests = [
     figmaLink: "",
   },
   {
-    id: "4",
+    id: "CR0004",
     requestName: "Navigation Breadcrumbs",
     justification: "Need a breadcrumb navigation component for better user orientation in deep page hierarchies.",
     requesterId: "designer_user_101",
@@ -172,6 +172,14 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
 
+  // Generate next ID
+  const generateNextId = () => {
+    const existingIds = requests.map((r) => Number.parseInt(r.id.replace("CR", "")))
+    const maxId = Math.max(...existingIds, 0)
+    const nextId = maxId + 1
+    return `CR${nextId.toString().padStart(4, "0")}`
+  }
+
   // Extract name from email for display
   const getUserName = (email: string) => {
     return email
@@ -186,7 +194,8 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       const matchesCategory = categoryFilter === "all" || request.category === categoryFilter
       const matchesSearch =
         request.requestName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        request.requesterName.toLowerCase().includes(searchTerm.toLowerCase())
+        request.requesterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.id.toLowerCase().includes(searchTerm.toLowerCase())
       return matchesStatus && matchesCategory && matchesSearch
     })
     .sort((a, b) => {
@@ -252,7 +261,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
 
   const handleManualRequestSubmit = () => {
     const newRequest: ComponentRequest = {
-      id: (requests.length + 1).toString(),
+      id: generateNextId(),
       requestName: manualRequestForm.requestName,
       justification: manualRequestForm.justification,
       requesterId: `manual_${Date.now()}`,
@@ -283,6 +292,14 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       requesterName: "",
       requesterEmail: user.email,
       figmaLink: "",
+    })
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     })
   }
 
@@ -467,7 +484,10 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
             <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b border-white/10 bg-white/5">
+                  <TableRow className="border-b border-white/10 bg-white/5 hover:bg-white/5">
+                    <TableHead className="px-6 py-4 text-left text-xs text-slate-300 uppercase tracking-wider font-semibold">
+                      ID
+                    </TableHead>
                     <TableHead className="px-6 py-4 text-left text-xs text-slate-300 uppercase tracking-wider font-semibold">
                       Component name
                     </TableHead>
@@ -483,6 +503,9 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                     <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Priority
                     </TableHead>
+                    <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                      Created
+                    </TableHead>
                     <TableHead className="px-6 py-4 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Actions
                     </TableHead>
@@ -494,6 +517,9 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                     const StatusIcon = statusIcons[request.status as keyof typeof statusIcons]
                     return (
                       <TableRow key={request.id} className="hover:bg-white/5 transition-colors duration-200">
+                        <TableCell className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-mono text-slate-300">{request.id}</div>
+                        </TableCell>
                         <TableCell className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-white">{request.requestName}</div>
                         </TableCell>
@@ -522,6 +548,9 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                           >
                             {request.severity}
                           </span>
+                        </TableCell>
+                        <TableCell className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-slate-300">{formatDate(request.requestedAt)}</span>
                         </TableCell>
                         <TableCell className="px-6 py-4 whitespace-nowrap text-center">
                           <Button
@@ -580,8 +609,8 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                                       {request.requestName}
                                     </DialogTitle>
                                     <DialogDescription className="text-slate-300">
-                                      Requested by {request.requesterName} on{" "}
-                                      {new Date(request.requestedAt).toLocaleDateString()}
+                                      {request.id} • Requested by {request.requesterName} on{" "}
+                                      {formatDate(request.requestedAt)}
                                     </DialogDescription>
                                   </DialogHeader>
                                   <div className="px-6 py-4 space-y-4">
