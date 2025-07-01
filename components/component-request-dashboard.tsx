@@ -2,7 +2,7 @@
 
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-import { Clock, CheckCircle, AlertCircle, Plus, Eye, LogOut, User, Edit, Trash2 } from "lucide-react"
+import { Clock, CheckCircle, AlertCircle, Plus, Eye, LogOut, User, Edit, Trash2, Loader2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,98 +37,27 @@ interface ComponentRequestDashboardProps {
   onLogout: () => void
 }
 
-// Mock data - replace with Firebase integration
-const mockRequests = [
-  {
-    id: "CR0001",
-    requestName: "Advanced Data Table",
-    justification:
-      "Need a sophisticated data table component with sorting, filtering, pagination, and row selection capabilities for the analytics dashboard.",
-    requesterId: "designer_user_123",
-    requesterName: "Sarah Chen",
-    requesterEmail: "sarah.chen@company.com",
-    status: "Pending",
-    denialReason: "",
-    requestedAt: "2024-10-26T10:00:00Z",
-    updatedAt: "2024-10-26T10:00:00Z",
-    frameData: {
-      fileId: "figma_file_abc",
-      nodeId: "1:23",
-      thumbnailUrl: "/placeholder.svg?height=200&width=300",
-    },
-    project: "CATT",
-    severity: "High",
-    category: "Display",
-    figmaLink: "https://figma.com/file/abc123/advanced-data-table",
-  },
-  {
-    id: "CR0002",
-    requestName: "Multi-step Form Wizard",
-    justification:
-      "Complex onboarding flow requires a multi-step form component with progress indicators, validation, and step navigation.",
-    requesterId: "designer_user_456",
-    requesterName: "Mike Rodriguez",
-    requesterEmail: "mike.rodriguez@company.com",
-    status: "In Progress",
-    denialReason: "",
-    requestedAt: "2024-10-25T14:30:00Z",
-    updatedAt: "2024-10-26T09:15:00Z",
-    frameData: {
-      fileId: "figma_file_def",
-      nodeId: "2:45",
-      thumbnailUrl: "/placeholder.svg?height=200&width=300",
-    },
-    project: "PTP",
-    severity: "Medium",
-    category: "Form",
-    figmaLink: "https://figma.com/file/def456/multi-step-form",
-  },
-  {
-    id: "CR0003",
-    requestName: "Interactive Dashboard Cards",
-    justification:
-      "Executive dashboard needs interactive cards with real-time data updates, hover effects, and drill-down capabilities.",
-    requesterId: "designer_user_789",
-    requesterName: "Emma Thompson",
-    requesterEmail: "emma.thompson@company.com",
-    status: "Completed",
-    denialReason: "",
-    requestedAt: "2024-10-20T11:00:00Z",
-    updatedAt: "2024-10-25T16:45:00Z",
-    frameData: {
-      fileId: "figma_file_ghi",
-      nodeId: "3:67",
-      thumbnailUrl: "/placeholder.svg?height=200&width=300",
-    },
-    project: "FX",
-    severity: "Urgent",
-    category: "Display",
-    figmaLink: "",
-  },
-  {
-    id: "CR0004",
-    requestName: "Navigation Breadcrumbs",
-    justification: "Need a breadcrumb navigation component for better user orientation in deep page hierarchies.",
-    requesterId: "designer_user_101",
-    requesterName: "Alex Kim",
-    requesterEmail: "alex.kim@company.com",
-    status: "Pending",
-    denialReason: "",
-    requestedAt: "2024-10-24T09:20:00Z",
-    updatedAt: "2024-10-25T10:30:00Z",
-    frameData: {
-      fileId: "figma_file_jkl",
-      nodeId: "4:89",
-      thumbnailUrl: "/placeholder.svg?height=200&width=300",
-    },
-    project: "Reference data",
-    severity: "Low",
-    category: "Navigation",
-    figmaLink: "",
-  },
-]
-
-type ComponentRequest = (typeof mockRequests)[0]
+interface ComponentRequest {
+  id: string
+  requestName: string
+  justification: string
+  requesterId: string
+  requesterName: string
+  requesterEmail: string
+  status: "Pending" | "In Progress" | "Completed"
+  denialReason: string
+  requestedAt: string
+  updatedAt: string
+  frameData: {
+    fileId: string
+    nodeId: string
+    thumbnailUrl: string
+  }
+  project: string
+  severity: "Low" | "Medium" | "High" | "Urgent"
+  category: "Form" | "Navigation" | "Display" | "Input" | "Layout"
+  figmaLink: string
+}
 
 const statusColors = {
   Pending: "bg-gray-500/20 text-gray-300 border-gray-500/30",
@@ -150,7 +79,8 @@ const statusIcons = {
 }
 
 export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDashboardProps) {
-  const [requests, setRequests] = useState<ComponentRequest[]>(mockRequests)
+  const [requests, setRequests] = useState<ComponentRequest[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedRequest, setSelectedRequest] = useState<ComponentRequest | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
@@ -176,6 +106,28 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false)
   const [apiKey, setApiKey] = useState("")
   const [isGeneratingKey, setIsGeneratingKey] = useState(false)
+
+  // Load requests on component mount
+  useEffect(() => {
+    loadRequests()
+  }, [])
+
+  const loadRequests = async () => {
+    try {
+      setLoading(true)
+      // Replace with your actual API endpoint
+      // const response = await fetch('/api/requests')
+      // const data = await response.json()
+      // setRequests(data)
+
+      // For now, start with empty array
+      setRequests([])
+    } catch (error) {
+      console.error("Failed to load requests:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Generate next ID
   const generateNextId = () => {
@@ -231,26 +183,40 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
     setCurrentPage(1)
   }, [statusFilter, categoryFilter, searchTerm])
 
-  const handleStatusUpdate = () => {
+  const handleStatusUpdate = async () => {
     if (!selectedRequest) return
 
-    const updatedRequests = requests.map((request) => {
-      if (request.id === selectedRequest.id) {
-        return {
-          ...request,
-          status: updateStatus,
-          denialReason: updateStatus === "Denied" ? denialReason : "",
-          updatedAt: new Date().toISOString(),
-        }
-      }
-      return request
-    })
+    try {
+      // Replace with your actual API endpoint
+      // await fetch(`/api/requests/${selectedRequest.id}`, {
+      //   method: 'PUT',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     status: updateStatus,
+      //     denialReason: updateStatus === "Denied" ? denialReason : "",
+      //   })
+      // })
 
-    setRequests(updatedRequests)
-    setIsUpdateDialogOpen(false)
-    setSelectedRequest(null)
-    setUpdateStatus("")
-    setDenialReason("")
+      const updatedRequests = requests.map((request) => {
+        if (request.id === selectedRequest.id) {
+          return {
+            ...request,
+            status: updateStatus as ComponentRequest["status"],
+            denialReason: updateStatus === "Denied" ? denialReason : "",
+            updatedAt: new Date().toISOString(),
+          }
+        }
+        return request
+      })
+
+      setRequests(updatedRequests)
+      setIsUpdateDialogOpen(false)
+      setSelectedRequest(null)
+      setUpdateStatus("")
+      setDenialReason("")
+    } catch (error) {
+      console.error("Failed to update request:", error)
+    }
   }
 
   const getStatusCounts = () => {
@@ -264,40 +230,65 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
 
   const statusCounts = getStatusCounts()
 
-  const handleManualRequestSubmit = () => {
-    const newRequest: ComponentRequest = {
-      id: generateNextId(),
-      requestName: manualRequestForm.requestName,
-      justification: manualRequestForm.justification,
-      requesterId: `manual_${Date.now()}`,
-      requesterName: manualRequestForm.requesterName,
-      requesterEmail: manualRequestForm.requesterEmail,
-      status: "Pending",
-      denialReason: "",
-      requestedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      frameData: {
-        fileId: "",
-        nodeId: "",
-        thumbnailUrl: "/placeholder.svg?height=200&width=300&text=Manual+Request",
-      },
-      severity: manualRequestForm.severity,
-      category: manualRequestForm.category,
-      project: "Manual",
-      figmaLink: manualRequestForm.figmaLink,
-    }
+  const handleManualRequestSubmit = async () => {
+    try {
+      const newRequest: ComponentRequest = {
+        id: generateNextId(),
+        requestName: manualRequestForm.requestName,
+        justification: manualRequestForm.justification,
+        requesterId: `manual_${Date.now()}`,
+        requesterName: manualRequestForm.requesterName,
+        requesterEmail: manualRequestForm.requesterEmail,
+        status: "Pending",
+        denialReason: "",
+        requestedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        frameData: {
+          fileId: "",
+          nodeId: "",
+          thumbnailUrl: "/placeholder.svg?height=200&width=300&text=Manual+Request",
+        },
+        severity: manualRequestForm.severity as ComponentRequest["severity"],
+        category: manualRequestForm.category as ComponentRequest["category"],
+        project: "Manual",
+        figmaLink: manualRequestForm.figmaLink,
+      }
 
-    setRequests([newRequest, ...requests])
-    setIsManualRequestOpen(false)
-    setManualRequestForm({
-      requestName: "",
-      justification: "",
-      severity: "Medium",
-      category: "Display",
-      requesterName: "",
-      requesterEmail: user.email,
-      figmaLink: "",
-    })
+      // Replace with your actual API endpoint
+      // await fetch('/api/requests', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(newRequest)
+      // })
+
+      setRequests([newRequest, ...requests])
+      setIsManualRequestOpen(false)
+      setManualRequestForm({
+        requestName: "",
+        justification: "",
+        severity: "Medium",
+        category: "Display",
+        requesterName: "",
+        requesterEmail: user.email,
+        figmaLink: "",
+      })
+    } catch (error) {
+      console.error("Failed to create request:", error)
+    }
+  }
+
+  const handleDeleteRequest = async (requestId: string) => {
+    try {
+      // Replace with your actual API endpoint
+      // await fetch(`/api/requests/${requestId}`, {
+      //   method: 'DELETE'
+      // })
+
+      const updatedRequests = requests.filter((r) => r.id !== requestId)
+      setRequests(updatedRequests)
+    } catch (error) {
+      console.error("Failed to delete request:", error)
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -316,6 +307,17 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       setApiKey(newKey)
       setIsGeneratingKey(false)
     }, 1500)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="flex items-center gap-3 text-white">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading dashboard...</span>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -525,318 +527,341 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
 
             {/* Requests Table */}
             <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b border-white/10 bg-white/5 hover:bg-white/5">
-                    <TableHead className="px-6 py-4 text-left text-xs text-slate-300 uppercase tracking-wider font-semibold">
-                      ID
-                    </TableHead>
-                    <TableHead className="px-6 py-4 text-left text-xs text-slate-300 uppercase tracking-wider font-semibold">
-                      Component name
-                    </TableHead>
-                    <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                      Requester
-                    </TableHead>
-                    <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                      Category
-                    </TableHead>
-                    <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                      Status
-                    </TableHead>
-                    <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                      Priority
-                    </TableHead>
-                    <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                      Created
-                    </TableHead>
-                    <TableHead className="px-6 py-4 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
-                      Actions
-                    </TableHead>
-                    <TableHead className="w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="divide-y divide-white/10">
-                  {paginatedRequests.map((request) => {
-                    const StatusIcon = statusIcons[request.status as keyof typeof statusIcons]
-                    return (
-                      <TableRow key={request.id} className="hover:bg-white/5 transition-colors duration-200">
-                        <TableCell className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-mono text-slate-300">{request.id}</div>
-                        </TableCell>
-                        <TableCell className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-white">{request.requestName}</div>
-                        </TableCell>
-                        <TableCell className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex flex-col">
-                            <div className="text-sm text-white">{request.requesterName}</div>
-                            <div className="text-xs bg-white/10 px-2 py-1 rounded-full w-fit mt-1 text-white">
-                              {request.project}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-slate-300">{request.category}</span>
-                        </TableCell>
-                        <TableCell className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusColors[request.status as keyof typeof statusColors]}`}
-                          >
-                            {StatusIcon && <StatusIcon className="mr-1.5 h-3 w-3" />}
-                            {request.status}
-                          </span>
-                        </TableCell>
-                        <TableCell className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${priorityColors[request.severity as keyof typeof priorityColors]}`}
-                          >
-                            {request.severity}
-                          </span>
-                        </TableCell>
-                        <TableCell className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-slate-300">{formatDate(request.requestedAt)}</span>
-                        </TableCell>
-                        <TableCell className="px-6 py-4 whitespace-nowrap text-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedRequest(request)
-                              setUpdateStatus(request.status)
-                              setDenialReason(request.denialReason)
-                              setIsUpdateDialogOpen(true)
-                            }}
-                            className="px-4 py-2 text-xs border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg"
-                          >
-                            Update
-                          </Button>
-                        </TableCell>
-                        <TableCell className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors duration-200"
+              {requests.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Plus className="h-8 w-8 text-slate-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-white mb-2">No requests yet</h3>
+                  <p className="text-slate-400 mb-6">Get started by creating your first component request.</p>
+                  <Button
+                    onClick={() => setIsManualRequestOpen(true)}
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-lg font-medium shadow-lg shadow-blue-500/25 transition-all duration-200 hover:shadow-blue-500/40"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create your first request
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-b border-white/10 bg-white/5 hover:bg-white/5">
+                        <TableHead className="px-6 py-4 text-left text-xs text-slate-300 uppercase tracking-wider font-semibold">
+                          ID
+                        </TableHead>
+                        <TableHead className="px-6 py-4 text-left text-xs text-slate-300 uppercase tracking-wider font-semibold">
+                          Component name
+                        </TableHead>
+                        <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                          Requester
+                        </TableHead>
+                        <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                          Category
+                        </TableHead>
+                        <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                          Status
+                        </TableHead>
+                        <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                          Priority
+                        </TableHead>
+                        <TableHead className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                          Created
+                        </TableHead>
+                        <TableHead className="px-6 py-4 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
+                          Actions
+                        </TableHead>
+                        <TableHead className="w-10"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className="divide-y divide-white/10">
+                      {paginatedRequests.map((request) => {
+                        const StatusIcon = statusIcons[request.status as keyof typeof statusIcons]
+                        return (
+                          <TableRow key={request.id} className="hover:bg-white/5 transition-colors duration-200">
+                            <TableCell className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-mono text-slate-300">{request.id}</div>
+                            </TableCell>
+                            <TableCell className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-white">{request.requestName}</div>
+                            </TableCell>
+                            <TableCell className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex flex-col">
+                                <div className="text-sm text-white">{request.requesterName}</div>
+                                <div className="text-xs bg-white/10 px-2 py-1 rounded-full w-fit mt-1 text-white">
+                                  {request.project}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm text-slate-300">{request.category}</span>
+                            </TableCell>
+                            <TableCell className="px-6 py-4 whitespace-nowrap">
+                              <span
+                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusColors[request.status as keyof typeof statusColors]}`}
                               >
-                                <svg
-                                  width="4"
-                                  height="16"
-                                  viewBox="0 0 4 16"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="h-4 w-4"
-                                >
-                                  <circle cx="2" cy="2" r="2" fill="currentColor" />
-                                  <circle cx="2" cy="8" r="2" fill="currentColor" />
-                                  <circle cx="2" cy="14" r="2" fill="currentColor" />
-                                </svg>
+                                {StatusIcon && <StatusIcon className="mr-1.5 h-3 w-3" />}
+                                {request.status}
+                              </span>
+                            </TableCell>
+                            <TableCell className="px-6 py-4 whitespace-nowrap">
+                              <span
+                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${priorityColors[request.severity as keyof typeof priorityColors]}`}
+                              >
+                                {request.severity}
+                              </span>
+                            </TableCell>
+                            <TableCell className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm text-slate-300">{formatDate(request.requestedAt)}</span>
+                            </TableCell>
+                            <TableCell className="px-6 py-4 whitespace-nowrap text-center">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedRequest(request)
+                                  setUpdateStatus(request.status)
+                                  setDenialReason(request.denialReason)
+                                  setIsUpdateDialogOpen(true)
+                                }}
+                                className="px-4 py-2 text-xs border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg"
+                              >
+                                Update
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              align="end"
-                              className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl min-w-[120px]"
-                            >
-                              <Dialog>
-                                <DialogTrigger asChild>
+                            </TableCell>
+                            <TableCell className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors duration-200"
+                                  >
+                                    <svg
+                                      width="4"
+                                      height="16"
+                                      viewBox="0 0 4 16"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="h-4 w-4"
+                                    >
+                                      <circle cx="2" cy="2" r="2" fill="currentColor" />
+                                      <circle cx="2" cy="8" r="2" fill="currentColor" />
+                                      <circle cx="2" cy="14" r="2" fill="currentColor" />
+                                    </svg>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  align="end"
+                                  className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl min-w-[120px]"
+                                >
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <DropdownMenuItem
+                                        onSelect={(e) => e.preventDefault()}
+                                        className="px-3 py-2 cursor-pointer hover:bg-white/10 text-slate-300 hover:text-white text-sm transition-colors duration-200"
+                                      >
+                                        <Eye className="mr-2 h-4 w-4" />
+                                        View
+                                      </DropdownMenuItem>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-blue-500/20">
+                                      <DialogHeader className="px-6 py-4 border-b border-white/10">
+                                        <DialogTitle className="text-xl font-semibold text-white">
+                                          {request.requestName}
+                                        </DialogTitle>
+                                        <DialogDescription className="text-slate-300">
+                                          {request.id} • Requested by {request.requesterName} on{" "}
+                                          {formatDate(request.requestedAt)}
+                                        </DialogDescription>
+                                      </DialogHeader>
+                                      <div className="px-6 py-4 space-y-4">
+                                        <div>
+                                          <Label className="text-sm font-medium text-slate-300">Status</Label>
+                                          <div className="mt-1">
+                                            <span
+                                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusColors[request.status as keyof typeof statusColors]}`}
+                                            >
+                                              {StatusIcon && <StatusIcon className="mr-1.5 h-3 w-3" />}
+                                              {request.status}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <Label className="text-sm font-medium text-slate-300">Priority</Label>
+                                          <div className="mt-1">
+                                            <span
+                                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${priorityColors[request.severity as keyof typeof priorityColors]}`}
+                                            >
+                                              {request.severity}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <Label className="text-sm font-medium text-slate-300">Category</Label>
+                                          <p className="mt-1 text-sm text-white">{request.category}</p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-sm font-medium text-slate-300">Requester email</Label>
+                                          <p className="mt-1 text-sm text-white">{request.requesterEmail}</p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-sm font-medium text-slate-300">Project</Label>
+                                          <div className="mt-1">
+                                            <span className="text-xs text-slate-400 bg-white/10 px-2 py-1 rounded-full">
+                                              {request.project}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        {request.figmaLink && (
+                                          <div>
+                                            <Label className="text-sm font-medium text-slate-300">Figma link</Label>
+                                            <div className="mt-1">
+                                              <a
+                                                href={request.figmaLink}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-blue-400 hover:text-blue-300 underline transition-colors duration-200"
+                                              >
+                                                {request.figmaLink}
+                                              </a>
+                                            </div>
+                                          </div>
+                                        )}
+                                        <div>
+                                          <Label className="text-sm font-medium text-slate-300">Description</Label>
+                                          <p className="mt-1 text-sm text-white">{request.justification}</p>
+                                        </div>
+                                        {request.frameData?.thumbnailUrl && (
+                                          <div>
+                                            <Label className="text-sm font-medium text-slate-300">Design preview</Label>
+                                            <div className="mt-2">
+                                              <img
+                                                src={request.frameData.thumbnailUrl || "/placeholder.svg"}
+                                                alt={`Preview of ${request.requestName}`}
+                                                className="rounded-lg border border-white/20 max-w-full h-auto"
+                                              />
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
                                   <DropdownMenuItem
-                                    onSelect={(e) => e.preventDefault()}
+                                    onSelect={() => {
+                                      setSelectedRequest(request)
+                                      setIsEditDialogOpen(true)
+                                    }}
                                     className="px-3 py-2 cursor-pointer hover:bg-white/10 text-slate-300 hover:text-white text-sm transition-colors duration-200"
                                   >
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    View
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit
                                   </DropdownMenuItem>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl shadow-blue-500/20">
-                                  <DialogHeader className="px-6 py-4 border-b border-white/10">
-                                    <DialogTitle className="text-xl font-semibold text-white">
-                                      {request.requestName}
-                                    </DialogTitle>
-                                    <DialogDescription className="text-slate-300">
-                                      {request.id} • Requested by {request.requesterName} on{" "}
-                                      {formatDate(request.requestedAt)}
-                                    </DialogDescription>
-                                  </DialogHeader>
-                                  <div className="px-6 py-4 space-y-4">
-                                    <div>
-                                      <Label className="text-sm font-medium text-slate-300">Status</Label>
-                                      <div className="mt-1">
-                                        <span
-                                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusColors[request.status as keyof typeof statusColors]}`}
-                                        >
-                                          {StatusIcon && <StatusIcon className="mr-1.5 h-3 w-3" />}
-                                          {request.status}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <Label className="text-sm font-medium text-slate-300">Priority</Label>
-                                      <div className="mt-1">
-                                        <span
-                                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${priorityColors[request.severity as keyof typeof priorityColors]}`}
-                                        >
-                                          {request.severity}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <Label className="text-sm font-medium text-slate-300">Category</Label>
-                                      <p className="mt-1 text-sm text-white">{request.category}</p>
-                                    </div>
-                                    <div>
-                                      <Label className="text-sm font-medium text-slate-300">Requester email</Label>
-                                      <p className="mt-1 text-sm text-white">{request.requesterEmail}</p>
-                                    </div>
-                                    <div>
-                                      <Label className="text-sm font-medium text-slate-300">Project</Label>
-                                      <div className="mt-1">
-                                        <span className="text-xs text-slate-400 bg-white/10 px-2 py-1 rounded-full">
-                                          {request.project}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    {request.figmaLink && (
-                                      <div>
-                                        <Label className="text-sm font-medium text-slate-300">Figma link</Label>
-                                        <div className="mt-1">
-                                          <a
-                                            href={request.figmaLink}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-sm text-blue-400 hover:text-blue-300 underline transition-colors duration-200"
-                                          >
-                                            {request.figmaLink}
-                                          </a>
-                                        </div>
-                                      </div>
-                                    )}
-                                    <div>
-                                      <Label className="text-sm font-medium text-slate-300">Description</Label>
-                                      <p className="mt-1 text-sm text-white">{request.justification}</p>
-                                    </div>
-                                    {request.frameData?.thumbnailUrl && (
-                                      <div>
-                                        <Label className="text-sm font-medium text-slate-300">Design preview</Label>
-                                        <div className="mt-2">
-                                          <img
-                                            src={request.frameData.thumbnailUrl || "/placeholder.svg"}
-                                            alt={`Preview of ${request.requestName}`}
-                                            className="rounded-lg border border-white/20 max-w-full h-auto"
-                                          />
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </DialogContent>
-                              </Dialog>
-                              <DropdownMenuItem
-                                onSelect={() => {
-                                  setSelectedRequest(request)
-                                  setIsEditDialogOpen(true)
-                                }}
-                                className="px-3 py-2 cursor-pointer hover:bg-white/10 text-slate-300 hover:text-white text-sm transition-colors duration-200"
+                                  <DropdownMenuItem
+                                    onSelect={() => handleDeleteRequest(request.id)}
+                                    className="px-3 py-2 cursor-pointer hover:bg-white/10 text-red-400 hover:text-red-300 text-sm transition-colors duration-200"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-6 px-6 pb-6">
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm text-slate-300">
+                          Showing {startIndex + 1} to{" "}
+                          {Math.min(startIndex + itemsPerPage, sortedAndFilteredRequests.length)} of{" "}
+                          {sortedAndFilteredRequests.length} results
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-slate-300">Show:</span>
+                          <Select
+                            value={itemsPerPage.toString()}
+                            onValueChange={(value) => setItemsPerPage(Number(value))}
+                          >
+                            <SelectTrigger className="w-20 px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm [&>span]:text-white">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl text-white">
+                              <SelectItem value="10" className="text-white hover:bg-white/10 focus:bg-white/10">
+                                10
+                              </SelectItem>
+                              <SelectItem value="20" className="text-white hover:bg-white/10 focus:bg-white/10">
+                                20
+                              </SelectItem>
+                              <SelectItem value="30" className="text-white hover:bg-white/10 focus:bg-white/10">
+                                30
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          disabled={currentPage === 1}
+                          className="px-3 py-2 text-xs border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </Button>
+
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum
+                            if (totalPages <= 5) {
+                              pageNum = i + 1
+                            } else if (currentPage <= 3) {
+                              pageNum = i + 1
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i
+                            } else {
+                              pageNum = currentPage - 2 + i
+                            }
+
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={currentPage === pageNum ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(pageNum)}
+                                className={`w-8 h-8 p-0 text-xs rounded-lg transition-all duration-200 ${
+                                  currentPage === pageNum
+                                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25"
+                                    : "border border-white/20 bg-white/5 text-white hover:bg-white/10 backdrop-blur-sm"
+                                }`}
                               >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={() => {
-                                  const updatedRequests = requests.filter((r) => r.id !== request.id)
-                                  setRequests(updatedRequests)
-                                }}
-                                className="px-3 py-2 cursor-pointer hover:bg-white/10 text-red-400 hover:text-red-300 text-sm transition-colors duration-200"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-            {/* Pagination Controls */}
-            <div className="flex items-center justify-between mt-6">
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-slate-300">
-                  Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, sortedAndFilteredRequests.length)} of{" "}
-                  {sortedAndFilteredRequests.length} results
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-slate-300">Show:</span>
-                  <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
-                    <SelectTrigger className="w-20 px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm [&>span]:text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800/90 backdrop-blur-md border border-white/20 rounded-lg shadow-xl text-white">
-                      <SelectItem value="10" className="text-white hover:bg-white/10 focus:bg-white/10">
-                        10
-                      </SelectItem>
-                      <SelectItem value="20" className="text-white hover:bg-white/10 focus:bg-white/10">
-                        20
-                      </SelectItem>
-                      <SelectItem value="30" className="text-white hover:bg-white/10 focus:bg-white/10">
-                        30
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                                {pageNum}
+                              </Button>
+                            )
+                          })}
+                        </div>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-2 text-xs border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </Button>
-
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum
-                    if (totalPages <= 5) {
-                      pageNum = i + 1
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i
-                    } else {
-                      pageNum = currentPage - 2 + i
-                    }
-
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`w-8 h-8 p-0 text-xs rounded-lg transition-all duration-200 ${
-                          currentPage === pageNum
-                            ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25"
-                            : "border border-white/20 bg-white/5 text-white hover:bg-white/10 backdrop-blur-sm"
-                        }`}
-                      >
-                        {pageNum}
-                      </Button>
-                    )
-                  })}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-2 text-xs border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </Button>
-              </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-2 text-xs border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -906,11 +931,15 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                       if (!selectedRequest) return
                       const updatedRequests = requests.map((r) =>
                         r.id === selectedRequest.id
-                          ? { ...r, category: value, updatedAt: new Date().toISOString() }
+                          ? {
+                              ...r,
+                              category: value as ComponentRequest["category"],
+                              updatedAt: new Date().toISOString(),
+                            }
                           : r,
                       )
                       setRequests(updatedRequests)
-                      setSelectedRequest({ ...selectedRequest, category: value })
+                      setSelectedRequest({ ...selectedRequest, category: value as ComponentRequest["category"] })
                     }}
                   >
                     <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1 [&>span]:text-white">
@@ -935,11 +964,15 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                       if (!selectedRequest) return
                       const updatedRequests = requests.map((r) =>
                         r.id === selectedRequest.id
-                          ? { ...r, severity: value, updatedAt: new Date().toISOString() }
+                          ? {
+                              ...r,
+                              severity: value as ComponentRequest["severity"],
+                              updatedAt: new Date().toISOString(),
+                            }
                           : r,
                       )
                       setRequests(updatedRequests)
-                      setSelectedRequest({ ...selectedRequest, severity: value })
+                      setSelectedRequest({ ...selectedRequest, severity: value as ComponentRequest["severity"] })
                     }}
                   >
                     <SelectTrigger className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white backdrop-blur-sm mt-1 [&>span]:text-white">

@@ -161,29 +161,26 @@ async function createComponentRequest(requestData) {
       project: "Figma Plugin", // You can customize this
     }
 
-    // Simulate API call (replace with your actual endpoint)
-    // For now, we'll simulate success after a delay
+    // Replace with your actual API endpoint
+    // const response = await fetch("https://your-dashboard-api.com/api/requests", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     "Authorization": `Bearer ${apiKey}`,
+    //     "X-Figma-Plugin": "component-request-system",
+    //   },
+    //   body: JSON.stringify(payload),
+    // })
+
+    // if (!response.ok) {
+    //   const errorData = await response.json().catch(() => ({}))
+    //   throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
+    // }
+
+    // const result = await response.json()
+
+    // Simulate API call for now
     await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    // In a real implementation, you would make an actual API call:
-    /*
-    const response = await fetch("https://your-dashboard-api.com/api/requests", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-        "X-Figma-Plugin": "component-request-system",
-      },
-      body: JSON.stringify(payload),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
-    }
-
-    const result = await response.json()
-    */
 
     // Simulate successful response
     const result = {

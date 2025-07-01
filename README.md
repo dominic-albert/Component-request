@@ -95,11 +95,38 @@ const response = await fetch("https://your-api-domain.com/api/requests", {
 })
 \`\`\`
 
-2. Implement the `/api/requests` endpoint to handle:
-   - POST: Create new requests
-   - GET: Retrieve requests
-   - PUT: Update requests
-   - DELETE: Remove requests
+2. Update the API calls in `components/component-request-dashboard.tsx`:
+\`\`\`javascript
+// Load requests
+const response = await fetch('/api/requests')
+const data = await response.json()
+setRequests(data)
+
+// Create request
+await fetch('/api/requests', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(newRequest)
+})
+
+// Update request
+await fetch(`/api/requests/${requestId}`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(updates)
+})
+
+// Delete request
+await fetch(`/api/requests/${requestId}`, {
+  method: 'DELETE'
+})
+\`\`\`
+
+3. Implement the API endpoints to handle:
+   - GET `/api/requests`: Retrieve requests
+   - POST `/api/requests`: Create new requests
+   - PUT `/api/requests/:id`: Update requests
+   - DELETE `/api/requests/:id`: Remove requests
 
 ## Data Structure
 
@@ -169,7 +196,8 @@ For issues and questions:
 
 ## Roadmap
 
-- [ ] Firebase integration
+- [ ] Backend API implementation
+- [ ] Database integration
 - [ ] Real-time notifications
 - [ ] Advanced analytics
 - [ ] Role-based permissions
@@ -181,45 +209,44 @@ For issues and questions:
 - [ ] File attachments
 \`\`\`
 
-Perfect! The Component Request System is now ready for publication. Here's what we've created:
+Perfect! The Component Request System is now ready for you to create your own backend. Here's what I've prepared:
 
-## 🎯 **Complete Production-Ready System**
+## 🎯 **Clean Frontend-Only System**
 
-### **Dashboard Features:**
-- ✅ **Professional Login Screen** with role selection
-- ✅ **Full CRUD Operations** for component requests
-- ✅ **Advanced Filtering & Search** with pagination
-- ✅ **API Key Management** for Figma plugin integration
-- ✅ **Responsive Design** with dark blue gradient theme
-- ✅ **Real-time Updates** and status management
+### **What's Ready:**
+- ✅ **Complete Dashboard** with all UI functionality
+- ✅ **Figma Plugin** with full integration points
+- ✅ **Empty State Handling** for when you start fresh
+- ✅ **Loading States** for API calls
+- ✅ **Error Handling** throughout
+- ✅ **API Integration Points** clearly marked with comments
 
-### **Figma Plugin Features:**
-- ✅ **Smart Selection Validation** (Frames & Components only)
-- ✅ **Auto Figma Link Generation** with proper node IDs
-- ✅ **Form Validation & Error Handling**
-- ✅ **API Integration Ready** with secure authentication
-- ✅ **High-Quality Image Export** for design previews
+### **What You Need to Build:**
 
-### **Technical Excellence:**
-- ✅ **TypeScript** for type safety
-- ✅ **Next.js 15** with App Router
-- ✅ **shadcn/ui** components
-- ✅ **Proper Error Handling** throughout
-- ✅ **Responsive Design** for all screen sizes
-- ✅ **Accessibility Features** built-in
+1. **Backend API** with these endpoints:
+   - `GET /api/requests` - Load all requests
+   - `POST /api/requests` - Create new request
+   - `PUT /api/requests/:id` - Update request
+   - `DELETE /api/requests/:id` - Delete request
 
-### **Ready for Deployment:**
-- ✅ **Complete Documentation** in README.md
-- ✅ **Production-Ready Code** with no placeholders
-- ✅ **Figma Plugin Manifest** properly configured
-- ✅ **API Integration Points** clearly marked
-- ✅ **Security Best Practices** implemented
+2. **Database** to store:
+   - Component requests
+   - User sessions (optional)
+   - API keys
 
-## 🚀 **Next Steps:**
+### **API Integration Points:**
 
-1. **Deploy Dashboard**: Use Vercel, Netlify, or your preferred platform
-2. **Install Figma Plugin**: Import manifest.json in Figma
-3. **Set up Backend API**: Implement the `/api/requests` endpoint
-4. **Test Integration**: Generate API keys and test the full workflow
+All the API calls are commented out and ready for you to uncomment once your backend is ready:
 
-The system is now complete and ready for production use! 🎉
+- **Dashboard**: `loadRequests()`, `handleStatusUpdate()`, `handleManualRequestSubmit()`, `handleDeleteRequest()`
+- **Figma Plugin**: `createComponentRequest()` function
+
+### **Next Steps:**
+
+1. **Choose Your Backend**: Node.js/Express, Python/FastAPI, etc.
+2. **Set Up Database**: PostgreSQL, MongoDB, Firebase, etc.
+3. **Implement API Endpoints**: Follow the data structure in README.md
+4. **Uncomment API Calls**: Replace the commented fetch calls
+5. **Test Integration**: Use the Figma plugin to create requests
+
+The system will start with an empty state and guide users to create their first request. Once you have your backend ready, just uncomment the API calls and you're good to go! 🚀
