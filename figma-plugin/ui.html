@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Component Request System</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+      color: #ffffff;
+      padding: 20px;
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+    }
+
+    .logo svg {
+      width: 24px;
+      height: 24px;
+      color: white;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+
+    .subtitle {
+      color: #cbd5e1;
+      font-size: 13px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #e2e8f0;
+      font-size: 13px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
+      font-size: 14px;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s ease;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: #94a3b8;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    .button {
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .button-primary {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .button-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .button-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .button-secondary:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .api-key-section {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .api-key-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .api-key-header svg {
+      width: 16px;
+      height: 16px;
+      color: #60a5fa;
+    }
+
+    .api-key-title {
+      font-weight: 500;
+      color: #60a5fa;
+      font-size: 13px;
+    }
+
+    .api-key-input {
+      position: relative;
+    }
+
+    .api-key-input input {
+      padding-right: 80px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 12px;
+    }
+
+    .toggle-button {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 4px 8px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .toggle-button:hover {
+      background: #2563eb;
+    }
+
+    .selection-info {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+
+    .selection-info-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: #4ade80;
+      font-weight: 500;
+    }
+
+    .selection-info-header svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .selection-details {
+      color: #bbf7d0;
+      font-size: 12px;
+    }
+
+    .error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .success {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      color: #86efac;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top: 2px solid #ffffff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .figma-link-display {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 12px;
+    }
+
+    .figma-link-header {
+      color: #4ade80;
+      font-weight: 500;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .figma-link-url {
+      color: #bbf7d0;
+      word-break: break-all;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    }
+
+    .instruction {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #93c5fd;
+    }
+
+    .instruction-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: #60a5fa;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+      </div>
+      <h1>Component Request System</h1>
+      <p class="subtitle">Create component requests from Figma frames & components</p>
+    </div>
+
+    <!-- Instructions -->
+    <div class="instruction">
+      <div class="instruction-header">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>How to use</span>
+      </div>
+      <p>1. Enter your API key from the dashboard<br>
+      2. Select a Frame or Component in Figma<br>
+      3. Fill out the form and create your request</p>
+    </div>
+
+    <!-- API Key Configuration -->
+    <div class="api-key-section">
+      <div class="api-key-header">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m0 0a2 2 0 012 2m-2-2h-6m6 0v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9a2 2 0 012-2h6z"/>
+        </svg>
+        <span class="api-key-title">API Configuration</span>
+      </div>
+      <div class="form-group">
+        <label for="apiKey">API Key *</label>
+        <div class="api-key-input">
+          <input 
+            type="password" 
+            id="apiKey" 
+            placeholder="Enter your API key from dashboard"
+            autocomplete="off"
+            required
+          >
+          <button class="toggle-button" id="toggleApiKey" type="button">Show</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error/Success Messages -->
+    <div id="errorMessage" class="error hidden"></div>
+    <div id="successMessage" class="success hidden"></div>
+
+    <!-- Selection Info -->
+    <div id="selectionInfo" class="selection-info hidden">
+      <div class="selection-info-header">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>Valid Selection Detected</span>
+      </div>
+      <div class="selection-details" id="selectionDetails"></div>
+    </div>
+
+    <!-- Figma Link Display -->
+    <div id="figmaLinkDisplay" class="figma-link-display hidden">
+      <div class="figma-link-header">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+        </svg>
+        <span>Figma Link (Auto-generated)</span>
+      </div>
+      <div class="figma-link-url" id="figmaLinkUrl"></div>
+    </div>
+
+    <!-- Request Form -->
+    <form id="requestForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="category">Category *</label>
+          <select id="category" required>
+            <option value="">Select category</option>
+            <option value="Form">Form</option>
+            <option value="Navigation">Navigation</option>
+            <option value="Display">Display</option>
+            <option value="Input">Input</option>
+            <option value="Layout">Layout</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="priority">Priority *</label>
+          <select id="priority" required>
+            <option value="">Select priority</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Urgent">Urgent</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="componentName">Component Title *</label>
+        <input 
+          type="text" 
+          id="componentName" 
+          placeholder="e.g., Advanced Data Table, Multi-step Form"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="requesterName">Your Name *</label>
+        <input 
+          type="text" 
+          id="requesterName" 
+          placeholder="Your full name"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="requesterEmail">Your Email *</label>
+        <input 
+          type="email" 
+          id="requesterEmail" 
+          placeholder="your.email@company.com"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description *</label>
+        <textarea 
+          id="description" 
+          placeholder="Describe the component requirements, use cases, and specific features needed..."
+          required
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <button type="submit" class="button button-primary" id="submitButton" disabled>
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Create Request
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // Plugin UI JavaScript
+    let currentSelection = null;
+    let figmaLink = null;
+    let apiKeyVisible = false;
+
+    // Initialize plugin
+    document.addEventListener('DOMContentLoaded', function() {
+      loadSavedData();
+      setupEventListeners();
+      requestSelectionUpdate();
+    });
+
+    function setupEventListeners() {
+      // API Key toggle
+      document.getElementById('toggleApiKey').addEventListener('click', toggleApiKeyVisibility);
+      
+      // Form submission
+      document.getElementById('requestForm').addEventListener('submit', handleFormSubmit);
+      
+      // Save form data on input
+      const inputs = document.querySelectorAll('input, textarea, select');
+      inputs.forEach(input => {
+        input.addEventListener('input', saveFormData);
+      });
+
+      // Check form validity on input
+      inputs.forEach(input => {
+        input.addEventListener('input', checkFormValidity);
+      });
+    }
+
+    function toggleApiKeyVisibility() {
+      const apiKeyInput = document.getElementById('apiKey');
+      const toggleButton = document.getElementById('toggleApiKey');
+      
+      apiKeyVisible = !apiKeyVisible;
+      apiKeyInput.type = apiKeyVisible ? 'text' : 'password';
+      toggleButton.textContent = apiKeyVisible ? 'Hide' : 'Show';
+    }
+
+    function loadSavedData() {
+      // Load saved form data
+      const savedData = JSON.parse(localStorage.getItem('figmaPluginData') || '{}');
+      
+      Object.keys(savedData).forEach(key => {
+        const element = document.getElementById(key);
+        if (element) {
+          element.value = savedData[key];
+        }
+      });
+
+      checkFormValidity();
+    }
+
+    function saveFormData() {
+      const formData = {};
+      const inputs = document.querySelectorAll('input, textarea, select');
+      
+      inputs.forEach(input => {
+        if (input.id) {
+          formData[input.id] = input.value;
+        }
+      });
+      
+      localStorage.setItem('figmaPluginData', JSON.stringify(formData));
+    }
+
+    function checkFormValidity() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      const category = document.getElementById('category').value;
+      const priority = document.getElementById('priority').value;
+      const componentName = document.getElementById('componentName').value.trim();
+      const requesterName = document.getElementById('requesterName').value.trim();
+      const requesterEmail = document.getElementById('requesterEmail').value.trim();
+      const description = document.getElementById('description').value.trim();
+
+      const isFormValid = apiKey && category && priority && componentName && 
+                         requesterName && requesterEmail && description && 
+                         currentSelection && currentSelection.length > 0;
+
+      document.getElementById('submitButton').disabled = !isFormValid;
+    }
+
+    function requestSelectionUpdate() {
+      parent.postMessage({ pluginMessage: { type: 'get-selection' } }, '*');
+    }
+
+    function showError(message) {
+      const errorDiv = document.getElementById('errorMessage');
+      errorDiv.textContent = message;
+      errorDiv.classList.remove('hidden');
+      
+      setTimeout(() => {
+        errorDiv.classList.add('hidden');
+      }, 5000);
+    }
+
+    function showSuccess(message) {
+      const successDiv = document.getElementById('successMessage');
+      successDiv.textContent = message;
+      successDiv.classList.remove('hidden');
+      
+      setTimeout(() => {
+        successDiv.classList.add('hidden');
+      }, 5000);
+    }
+
+    function updateSelectionInfo(selection, link, error) {
+      currentSelection = selection;
+      figmaLink = link;
+      
+      const selectionInfo = document.getElementById('selectionInfo');
+      const selectionDetails = document.getElementById('selectionDetails');
+      const figmaLinkDisplay = document.getElementById('figmaLinkDisplay');
+      const figmaLinkUrl = document.getElementById('figmaLinkUrl');
+      
+      // Clear previous error
+      document.getElementById('errorMessage').classList.add('hidden');
+      
+      if (error) {
+        showError(error);
+        selectionInfo.classList.add('hidden');
+        figmaLinkDisplay.classList.add('hidden');
+        currentSelection = null;
+        figmaLink = null;
+      } else if (selection && selection.length > 0) {
+        const item = selection[0];
+        selectionDetails.textContent = `${item.type}: "${item.name}" (${Math.round(item.width)}×${Math.round(item.height)})`;
+        selectionInfo.classList.remove('hidden');
+        
+        if (link) {
+          figmaLinkUrl.textContent = link;
+          figmaLinkDisplay.classList.remove('hidden');
+        } else {
+          figmaLinkDisplay.classList.add('hidden');
+        }
+        
+        // Auto-fill component name if empty
+        if (!document.getElementById('componentName').value) {
+          document.getElementById('componentName').value = item.name;
+          saveFormData();
+        }
+      } else {
+        selectionInfo.classList.add('hidden');
+        figmaLinkDisplay.classList.add('hidden');
+      }
+
+      checkFormValidity();
+    }
+
+    function setLoading(isLoading) {
+      const submitButton = document.getElementById('submitButton');
+      
+      if (isLoading) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = `
+          <div class="loading">
+            <div class="spinner"></div>
+            <span>Creating Request...</span>
+          </div>
+        `;
+      } else {
+        submitButton.innerHTML = `
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Create Request
+        `;
+        checkFormValidity();
+      }
+    }
+
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      
+      const apiKey = document.getElementById('apiKey').value.trim();
+      if (!apiKey) {
+        showError('Please enter your API key from the dashboard');
+        return;
+      }
+
+      if (!currentSelection || currentSelection.length === 0) {
+        showError('Please select a Frame or Component in Figma');
+        return;
+      }
+      
+      const formData = {
+        apiKey,
+        category: document.getElementById('category').value,
+        priority: document.getElementById('priority').value,
+        componentName: document.getElementById('componentName').value,
+        requesterName: document.getElementById('requesterName').value,
+        requesterEmail: document.getElementById('requesterEmail').value,
+        description: document.getElementById('description').value,
+        selection: currentSelection[0],
+        figmaLink: figmaLink
+      };
+      
+      setLoading(true);
+      
+      // Send to main plugin code
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: 'create-request', 
+          data: formData 
+        } 
+      }, '*');
+    }
+
+    // Listen for messages from main plugin code
+    window.addEventListener('message', (event) => {
+      const { type, data, error, link } = event.data.pluginMessage || {};
+      
+      switch (type) {
+        case 'selection-updated':
+          updateSelectionInfo(data, link, error);
+          break;
+          
+        case 'request-success':
+          setLoading(false);
+          showSuccess('Component request created successfully! Check your dashboard.');
+          break;
+          
+        case 'request-error':
+          setLoading(false);
+          showError(error || 'Failed to create request');
+          break;
+      }
+    });
+  </script>
+</body>
+</html>
