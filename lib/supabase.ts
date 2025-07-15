@@ -5,17 +5,53 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-// Create a mock client for development when env vars are missing
-const createMockClient = () => ({
-  from: () => ({
-    select: () => Promise.resolve({ data: [], error: null }),
-    insert: () => Promise.resolve({ data: null, error: null }),
-    update: () => Promise.resolve({ data: null, error: null }),
-    delete: () => Promise.resolve({ data: null, error: null }),
-    upsert: () => Promise.resolve({ data: null, error: null }),
-  }),
-  rpc: () => Promise.resolve({ data: null, error: null }),
-})
+/* -------------------------------------------------------------------------- */
+/*                             Mock Client Factory                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A minimal, chain-able, await-able query builder that mimics the parts of the
+ * Supabase JS API we use in our API routes. It always resolves to
+ * `{ data: [], error: null }` so the app can render without a database.
+ */
+function createMockClient() {
+  // --- the final result every query returns -------------------------------
+  const okResult = { data: [] as any[], error: null }
+
+  // --- a tiny “builder” that supports .select().order() chains ------------
+  const builder: any = {
+    select() {
+      return builder
+    },
+    order() {
+      return builder
+    },
+    insert() {
+      return {
+        select: () => Promise.resolve({ data: null, error: null }),
+      }
+    },
+    delete() {
+      return Promise.resolve(okResult)
+    },
+    update() {
+      return builder
+    },
+    // await supabase.from(...).select(...) ➜ we need to be then-able
+    then(onFulfilled: (v: typeof okResult) => any) {
+      return Promise.resolve(okResult).then(onFulfilled)
+    },
+  }
+
+  return {
+    from() {
+      return builder
+    },
+    rpc() {
+      return Promise.resolve({ data: null, error: null })
+    },
+  }
+}
 
 // Client-side Supabase client (for browser)
 export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : createMockClient()
