@@ -1,70 +1,63 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import { createClient } from "@supabase/supabase-js"
 
-/**
- * When the necessary Supabase env-vars are present we create real clients.
- * Otherwise we return a tiny mock so local preview / Storybook doesn’t crash.
- */
-
-/* -------------------------------------------------------------------------- */
-/*                               Helper Types                                 */
-/* -------------------------------------------------------------------------- */
-
-type MockQuery<T = any> = {
-  select: () => Promise<{ data: T[]; error: null }>
-  insert: () => Promise<{ data: T | null; error: null }>
-  order: () => MockQuery<T>
-}
-
-type MockClient = {
-  from: <T = any>() => MockQuery<T>
-  rpc: () => Promise<{ data: null; error: Error }>
-}
-
-/* -------------------------------------------------------------------------- */
-/*                             Mock Client Factory                            */
-/* -------------------------------------------------------------------------- */
-
-function createMockClient(): MockClient {
-  const ok = async <T = any>(d: T) => ({ data: d, error: null })
-
-  const query: MockQuery = {
-    select: () => ok([]),
-    insert: () => ok(null),
-    order: () => query,
-  }
-
-  return {
-    from: () => query,
-    rpc: async () => ({ data: null, error: new Error("Supabase not configured") }),
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/*                              Real or Mock?                                 */
-/* -------------------------------------------------------------------------- */
-
+// Check if we have all required environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-let supabase: SupabaseClient | MockClient
-let supabaseAdmin: SupabaseClient | MockClient
+// Create a mock client for development when env vars are missing
+const createMockClient = () => ({
+  from: () => ({
+    select: () => Promise.resolve({ data: [], error: null }),
+    insert: () => Promise.resolve({ data: null, error: null }),
+    update: () => Promise.resolve({ data: null, error: null }),
+    delete: () => Promise.resolve({ data: null, error: null }),
+    upsert: () => Promise.resolve({ data: null, error: null }),
+  }),
+  rpc: () => Promise.resolve({ data: null, error: null }),
+})
 
-if (supabaseUrl && supabaseAnonKey) {
-  supabase = createClient(supabaseUrl, supabaseAnonKey)
-} else {
-  console.warn(
-    "[supabase] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. " +
-      "Using mock client so the app can still render.",
-  )
-  supabase = createMockClient()
+// Client-side Supabase client (for browser)
+export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : createMockClient()
+
+// Server-side Supabase client with service role (for API routes)
+export const supabaseAdmin =
+  supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : createMockClient()
+
+// Type definitions
+export interface User {
+  id: string
+  email: string
+  name: string
+  role: "Admin" | "Creator" | "Requester"
+  created_at: string
+  updated_at: string
 }
 
-if (supabaseUrl && supabaseServiceKey) {
-  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
-} else {
-  // Service-role key isn’t available in browser previews, that’s fine.
-  supabaseAdmin = createMockClient()
+export interface ComponentRequest {
+  id: string
+  request_name: string
+  justification: string
+  requester_id?: string
+  requester_name: string
+  requester_email: string
+  status: "Pending" | "In Progress" | "Completed" | "Cancelled"
+  category?: string
+  severity: "Low" | "Medium" | "High" | "Urgent"
+  project?: string
+  figma_link?: string
+  source: "manual" | "figma-plugin"
+  created_at: string
+  updated_at: string
 }
 
-export { supabase, supabaseAdmin }
+export interface ApiKey {
+  id: string
+  user_id: string
+  key_hash: string
+  key_prefix: string
+  name: string
+  created_at: string
+  last_used_at?: string
+  is_active: boolean
+}
