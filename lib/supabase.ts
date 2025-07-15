@@ -5,52 +5,39 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-/* -------------------------------------------------------------------------- */
-/*                             Mock Client Factory                            */
-/* -------------------------------------------------------------------------- */
-
-/**
- * A minimal, chain-able, await-able query builder that mimics the parts of the
- * Supabase JS API we use in our API routes. It always resolves to
- * `{ data: [], error: null }` so the app can render without a database.
- */
+// Create a proper mock client that matches Supabase's API
 function createMockClient() {
-  // --- the final result every query returns -------------------------------
-  const okResult = { data: [] as any[], error: null }
+  const mockResult = { data: [], error: null }
+  const mockSingleResult = { data: null, error: null }
 
-  // --- a tiny “builder” that supports .select().order() chains ------------
-  const builder: any = {
-    select() {
-      return builder
-    },
-    order() {
-      return builder
-    },
-    insert() {
-      return {
-        select: () => Promise.resolve({ data: null, error: null }),
-      }
-    },
-    delete() {
-      return Promise.resolve(okResult)
-    },
-    update() {
-      return builder
-    },
-    // await supabase.from(...).select(...) ➜ we need to be then-able
-    then(onFulfilled: (v: typeof okResult) => any) {
-      return Promise.resolve(okResult).then(onFulfilled)
-    },
+  const mockQueryBuilder = {
+    select: () => mockQueryBuilder,
+    insert: () => ({
+      select: () => ({
+        single: () => Promise.resolve(mockSingleResult),
+      }),
+    }),
+    update: () => mockQueryBuilder,
+    delete: () => Promise.resolve(mockResult),
+    eq: () => mockQueryBuilder,
+    order: () => mockQueryBuilder,
+    single: () => Promise.resolve(mockSingleResult),
+    then: (resolve: any) => Promise.resolve(mockResult).then(resolve),
   }
 
   return {
-    from() {
-      return builder
-    },
-    rpc() {
-      return Promise.resolve({ data: null, error: null })
-    },
+    from: () => mockQueryBuilder,
+    rpc: () => Promise.resolve(mockSingleResult),
   }
+}
+
+// Log warning if environment variables are missing
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn("⚠️ Supabase environment variables missing. Using mock client.")
+}
+
+if (!supabaseServiceKey) {
+  console.warn("⚠️ Supabase service role key missing. API routes will use mock client.")
 }
 
 // Client-side Supabase client (for browser)
@@ -78,10 +65,16 @@ export interface ComponentRequest {
   requester_name: string
   requester_email: string
   status: "Pending" | "In Progress" | "Completed" | "Cancelled"
-  category?: string
+  denial_reason?: string
+  category: "Form" | "Navigation" | "Display" | "Input" | "Layout"
   severity: "Low" | "Medium" | "High" | "Urgent"
-  project?: string
+  project: string
   figma_link?: string
+  figma_file_key?: string
+  figma_file_name?: string
+  figma_node_id?: string
+  image_data?: string
+  selection_data?: any
   source: "manual" | "figma-plugin"
   created_at: string
   updated_at: string
@@ -95,5 +88,6 @@ export interface ApiKey {
   name: string
   created_at: string
   last_used_at?: string
+  expires_at?: string
   is_active: boolean
 }

@@ -1,45 +1,48 @@
--- Function to generate unique request ID
-CREATE OR REPLACE FUNCTION generate_request_id()
+-- Function to generate next request ID
+CREATE OR REPLACE FUNCTION generate_next_request_id()
 RETURNS TEXT AS $$
 DECLARE
-    new_id TEXT;
-    counter INTEGER := 1;
+    next_id INTEGER;
+    formatted_id TEXT;
 BEGIN
-    LOOP
-        new_id := 'CR' || LPAD(counter::TEXT, 4, '0');
-        
-        -- Check if this ID already exists
-        IF NOT EXISTS (SELECT 1 FROM component_requests WHERE id = new_id) THEN
-            RETURN new_id;
-        END IF;
-        
-        counter := counter + 1;
-        
-        -- Safety check to prevent infinite loop
-        IF counter > 9999 THEN
-            RAISE EXCEPTION 'Unable to generate unique request ID';
-        END IF;
-    END LOOP;
+    -- Get the highest existing ID number
+    SELECT COALESCE(
+        MAX(CAST(SUBSTRING(id FROM 3) AS INTEGER)), 
+        0
+    ) + 1 INTO next_id
+    FROM component_requests 
+    WHERE id ~ '^CR[0-9]+$';
+    
+    -- Format as CR0001, CR0002, etc.
+    formatted_id := 'CR' || LPAD(next_id::TEXT, 4, '0');
+    
+    RETURN formatted_id;
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to get or create user
-CREATE OR REPLACE FUNCTION get_or_create_user(
-    p_email VARCHAR(255),
-    p_name VARCHAR(255),
-    p_role VARCHAR(50) DEFAULT 'Requester'
+-- Function to create or get user
+CREATE OR REPLACE FUNCTION create_or_get_user(
+    p_email TEXT,
+    p_name TEXT DEFAULT NULL,
+    p_role TEXT DEFAULT 'Requester'
 )
 RETURNS UUID AS $$
 DECLARE
     user_id UUID;
+    final_name TEXT;
 BEGIN
-    -- Try to find existing user
-    SELECT id INTO user_id FROM users WHERE email = p_email;
+    -- Set default name if not provided
+    final_name := COALESCE(p_name, SPLIT_PART(p_email, '@', 1));
+    
+    -- Try to get existing user
+    SELECT id INTO user_id
+    FROM users
+    WHERE email = p_email;
     
     -- If user doesn't exist, create them
     IF user_id IS NULL THEN
         INSERT INTO users (email, name, role)
-        VALUES (p_email, p_name, p_role)
+        VALUES (p_email, final_name, p_role)
         RETURNING id INTO user_id;
     END IF;
     
@@ -47,72 +50,47 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to create component request with auto-generated ID
-CREATE OR REPLACE FUNCTION create_component_request(
-    p_request_name VARCHAR(255),
-    p_justification TEXT,
-    p_requester_name VARCHAR(255),
-    p_requester_email VARCHAR(255),
-    p_category VARCHAR(100) DEFAULT NULL,
-    p_severity VARCHAR(20) DEFAULT 'Medium',
-    p_project VARCHAR(255) DEFAULT NULL,
-    p_figma_link TEXT DEFAULT NULL,
-    p_source VARCHAR(50) DEFAULT 'manual'
-)
-RETURNS VARCHAR(20) AS $$
-DECLARE
-    new_request_id VARCHAR(20);
-    user_id UUID;
+-- Function to validate API key
+CREATE OR REPLACE FUNCTION validate_api_key(p_key_hash TEXT)
+RETURNS TABLE(
+    user_id UUID,
+    email TEXT,
+    name TEXT,
+    role TEXT
+) AS $$
 BEGIN
-    -- Generate unique request ID
-    new_request_id := generate_request_id();
+    RETURN QUERY
+    SELECT u.id, u.email, u.name, u.role
+    FROM api_keys ak
+    JOIN users u ON ak.user_id = u.id
+    WHERE ak.key_hash = p_key_hash 
+    AND ak.is_active = TRUE
+    AND (ak.expires_at IS NULL OR ak.expires_at > NOW());
     
-    -- Get or create user
-    user_id := get_or_create_user(p_requester_email, p_requester_name, 'Requester');
-    
-    -- Insert the request
-    INSERT INTO component_requests (
-        id, request_name, justification, requester_id, requester_name, 
-        requester_email, category, severity, project, figma_link, source
-    ) VALUES (
-        new_request_id, p_request_name, p_justification, user_id, p_requester_name,
-        p_requester_email, p_category, p_severity, p_project, p_figma_link, p_source
-    );
-    
-    RETURN new_request_id;
-END;
-$$ LANGUAGE plpgsql;
-
--- Function to update request status
-CREATE OR REPLACE FUNCTION update_request_status(
-    p_request_id VARCHAR(20),
-    p_status VARCHAR(50)
-)
-RETURNS BOOLEAN AS $$
-BEGIN
-    UPDATE component_requests 
-    SET status = p_status, updated_at = NOW()
-    WHERE id = p_request_id;
-    
-    RETURN FOUND;
+    -- Update last_used_at
+    UPDATE api_keys 
+    SET last_used_at = NOW()
+    WHERE key_hash = p_key_hash;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get request statistics
 CREATE OR REPLACE FUNCTION get_request_stats()
-RETURNS JSON AS $$
-DECLARE
-    result JSON;
+RETURNS TABLE(
+    total BIGINT,
+    pending BIGINT,
+    in_progress BIGINT,
+    completed BIGINT,
+    cancelled BIGINT
+) AS $$
 BEGIN
-    SELECT json_build_object(
-        'total', COUNT(*),
-        'pending', COUNT(*) FILTER (WHERE status = 'Pending'),
-        'in_progress', COUNT(*) FILTER (WHERE status = 'In Progress'),
-        'completed', COUNT(*) FILTER (WHERE status = 'Completed'),
-        'cancelled', COUNT(*) FILTER (WHERE status = 'Cancelled')
-    ) INTO result
+    RETURN QUERY
+    SELECT 
+        COUNT(*) as total,
+        COUNT(*) FILTER (WHERE status = 'Pending') as pending,
+        COUNT(*) FILTER (WHERE status = 'In Progress') as in_progress,
+        COUNT(*) FILTER (WHERE status = 'Completed') as completed,
+        COUNT(*) FILTER (WHERE status = 'Cancelled') as cancelled
     FROM component_requests;
-    
-    RETURN result;
 END;
 $$ LANGUAGE plpgsql;

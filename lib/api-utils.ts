@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "./supabase"
 import type { ComponentRequest, User, ApiKey } from "./supabase"
-import crypto from "crypto"
+import { createHash } from "crypto"
 
 // Request management functions
 export async function getAllRequests(): Promise<ComponentRequest[]> {
@@ -76,6 +76,21 @@ export async function deleteRequest(id: string): Promise<boolean> {
   return true
 }
 
+export async function generateNextRequestId(): Promise<string> {
+  try {
+    const { data, error } = await supabaseAdmin.rpc("generate_next_request_id")
+
+    if (error) {
+      throw new Error(`Failed to generate request ID: ${error.message}`)
+    }
+
+    return data
+  } catch (error) {
+    console.error("Error generating request ID:", error)
+    throw error
+  }
+}
+
 // User management functions
 export async function getOrCreateUser(
   email: string,
@@ -115,56 +130,54 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   return data
 }
 
-// API Key management functions
-export async function generateApiKey(userId: string, name: string): Promise<{ key: string; keyData: ApiKey } | null> {
-  // Generate a random API key
-  const apiKey = `crs_${crypto.randomBytes(32).toString("hex")}`
-  const keyHash = crypto.createHash("sha256").update(apiKey).digest("hex")
-  const keyPrefix = apiKey.substring(0, 8)
-
-  const { data, error } = await supabaseAdmin
-    .from("api_keys")
-    .insert({
-      user_id: userId,
-      key_hash: keyHash,
-      key_prefix: keyPrefix,
-      name: name,
+export async function createUser(email: string, name?: string, role = "Requester") {
+  try {
+    const { data, error } = await supabaseAdmin.rpc("create_or_get_user", {
+      p_email: email,
+      p_name: name,
+      p_role: role,
     })
-    .select()
-    .single()
 
-  if (error) {
-    console.error("Error creating API key:", error)
-    return null
-  }
+    if (error) {
+      throw new Error(`Failed to create user: ${error.message}`)
+    }
 
-  return {
-    key: apiKey,
-    keyData: data,
+    return data
+  } catch (error) {
+    console.error("Error creating user:", error)
+    throw error
   }
 }
 
-export async function validateApiKey(apiKey: string): Promise<User | null> {
-  const keyHash = crypto.createHash("sha256").update(apiKey).digest("hex")
+// API Key management functions
+export function hashApiKey(key: string): string {
+  return createHash("sha256").update(key).digest("hex")
+}
 
-  const { data, error } = await supabaseAdmin
-    .from("api_keys")
-    .select(`
-      *,
-      users (*)
-    `)
-    .eq("key_hash", keyHash)
-    .eq("is_active", true)
-    .single()
+export function generateApiKey(userEmail: string): string {
+  const timestamp = Date.now().toString(36)
+  const random = Math.random().toString(36).substr(2, 9)
+  const username = userEmail.split("@")[0]
+  return `crs_${username}_${timestamp}_${random}`
+}
 
-  if (error || !data) {
+export async function validateApiKey(apiKey: string) {
+  try {
+    const keyHash = hashApiKey(apiKey)
+
+    const { data, error } = await supabaseAdmin.rpc("validate_api_key", {
+      p_key_hash: keyHash,
+    })
+
+    if (error || !data || data.length === 0) {
+      return null
+    }
+
+    return data[0]
+  } catch (error) {
+    console.error("Error validating API key:", error)
     return null
   }
-
-  // Update last_used_at
-  await supabaseAdmin.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", data.id)
-
-  return data.users as User
 }
 
 export async function getUserApiKeys(userId: string): Promise<ApiKey[]> {

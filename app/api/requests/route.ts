@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase"
-import { validateApiKey, generateNextRequestId, createUser } from "@/lib/api-utils"
+import { validateApiKey } from "@/lib/api-utils"
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,11 +10,13 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false })
 
     if (error) {
+      console.error("Database error:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json(requests)
+    return NextResponse.json(requests || [])
   } catch (error) {
+    console.error("API error:", error)
     return NextResponse.json({ error: "Failed to fetch requests" }, { status: 500 })
   }
 }
@@ -35,11 +37,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate next request ID
-    const requestId = await generateNextRequestId()
+    const { data: requestId, error: idError } = await supabaseAdmin.rpc("generate_next_request_id")
+
+    if (idError) {
+      console.error("Error generating request ID:", idError)
+      return NextResponse.json({ error: "Failed to generate request ID" }, { status: 500 })
+    }
 
     // Create or get user if email is provided
     if (body.requesterEmail && !userId) {
-      userId = await createUser(body.requesterEmail, body.requesterName)
+      try {
+        const { data: newUserId, error: userError } = await supabaseAdmin.rpc("create_or_get_user", {
+          p_email: body.requesterEmail,
+          p_name: body.requesterName,
+          p_role: "Requester",
+        })
+
+        if (userError) {
+          console.error("Error creating user:", userError)
+        } else {
+          userId = newUserId
+        }
+      } catch (userErr) {
+        console.error("User creation failed:", userErr)
+      }
     }
 
     // Prepare request data
@@ -66,6 +87,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabaseAdmin.from("component_requests").insert(requestData).select().single()
 
     if (error) {
+      console.error("Database insert error:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
