@@ -6,24 +6,22 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseUrl) {
-  throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL environment variable")
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
 }
 
 if (!supabaseAnonKey) {
-  throw new Error("Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable")
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
 }
 
 if (!supabaseServiceKey) {
-  throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable")
+  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
 }
 
 // Validate URL format
 try {
   new URL(supabaseUrl)
 } catch (error) {
-  throw new Error(
-    `Invalid NEXT_PUBLIC_SUPABASE_URL: ${supabaseUrl}. Please ensure it's a valid URL (e.g., https://your-project.supabase.co)`,
-  )
+  throw new Error(`Invalid NEXT_PUBLIC_SUPABASE_URL: ${supabaseUrl}. Please ensure it's a valid URL (e.g., https://your-project.supabase.co)`)
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)

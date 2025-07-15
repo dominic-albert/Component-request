@@ -1,73 +1,49 @@
 import { supabaseAdmin } from "./supabase"
-import crypto from "crypto"
+import { createHash } from "crypto"
 
-// Generate a unique API key
-export function generateApiKey(email: string): string {
+export function hashApiKey(key: string): string {
+  return createHash("sha256").update(key).digest("hex")
+}
+
+export function generateApiKey(userEmail: string): string {
   const timestamp = Date.now().toString(36)
-  const randomBytes = crypto.randomBytes(16).toString("hex")
-  const emailHash = crypto.createHash("md5").update(email).digest("hex").substring(0, 8)
-
-  return `crs_${emailHash}_${timestamp}_${randomBytes}`
+  const random = Math.random().toString(36).substr(2, 9)
+  const username = userEmail.split("@")[0]
+  return `crs_${username}_${timestamp}_${random}`
 }
 
-// Hash an API key for storage
-export function hashApiKey(apiKey: string): string {
-  return crypto.createHash("sha256").update(apiKey).digest("hex")
-}
-
-// Validate an API key
 export async function validateApiKey(apiKey: string) {
-  try {
-    const keyHash = hashApiKey(apiKey)
+  const keyHash = hashApiKey(apiKey)
 
-    const { data, error } = await supabaseAdmin.rpc("validate_api_key", { p_key_hash: keyHash })
+  const { data, error } = await supabaseAdmin.rpc("validate_api_key", { p_key_hash: keyHash })
 
-    if (error) {
-      console.error("API key validation error:", error)
-      return null
-    }
-
-    return data?.[0] || null
-  } catch (error) {
-    console.error("API key validation error:", error)
+  if (error || !data || data.length === 0) {
     return null
   }
+
+  return data[0]
 }
 
-// Generate next request ID
+export async function createUser(email: string, name?: string, role = "Requester") {
+  const { data, error } = await supabaseAdmin.rpc("create_or_get_user", {
+    p_email: email,
+    p_name: name,
+    p_role: role,
+  })
+
+  if (error) {
+    throw new Error(`Failed to create user: ${error.message}`)
+  }
+
+  return data
+}
+
 export async function generateNextRequestId(): Promise<string> {
-  try {
-    const { data, error } = await supabaseAdmin.rpc("generate_next_request_id")
+  const { data, error } = await supabaseAdmin.rpc("generate_next_request_id")
 
-    if (error) {
-      console.error("Error generating request ID:", error)
-      throw new Error("Failed to generate request ID")
-    }
-
-    return data
-  } catch (error) {
-    console.error("Error generating request ID:", error)
-    throw new Error("Failed to generate request ID")
+  if (error) {
+    throw new Error(`Failed to generate request ID: ${error.message}`)
   }
-}
 
-// Create or get user
-export async function createUser(email: string, name?: string, role = "Requester"): Promise<string> {
-  try {
-    const { data, error } = await supabaseAdmin.rpc("create_or_get_user", {
-      p_email: email,
-      p_name: name,
-      p_role: role,
-    })
-
-    if (error) {
-      console.error("Error creating/getting user:", error)
-      throw new Error("Failed to create/get user")
-    }
-
-    return data
-  } catch (error) {
-    console.error("Error creating/getting user:", error)
-    throw new Error("Failed to create/get user")
-  }
+  return data
 }
