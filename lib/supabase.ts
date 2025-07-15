@@ -5,35 +5,80 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-// Create a proper mock client that matches Supabase's API
-function createMockClient() {
-  const mockResult = { data: [], error: null }
-  const mockSingleResult = { data: null, error: null }
+/* -------------------------------------------------------------------------- */
+/*                             Mock Client Factory                            */
+/* -------------------------------------------------------------------------- */
 
-  const mockQueryBuilder = {
-    select: () => mockQueryBuilder,
-    insert: () => ({
-      select: () => ({
-        single: () => Promise.resolve(mockSingleResult),
-      }),
-    }),
-    update: () => mockQueryBuilder,
-    delete: () => Promise.resolve(mockResult),
-    eq: () => mockQueryBuilder,
-    order: () => mockQueryBuilder,
-    single: () => Promise.resolve(mockSingleResult),
-    then: (resolve: any) => Promise.resolve(mockResult).then(resolve),
+/**
+ * A minimal, chain-able, await-able query builder that mimics the parts of the
+ * Supabase JS API we use in our API routes. It always resolves to
+ * `{ data: [], error: null }` so the app can render without a database.
+ */
+function createMockClient() {
+  // --- the final result every query returns -------------------------------
+  const okResult = { data: [] as any[], error: null }
+  const okSingleResult = { data: null, error: null }
+
+  // A simple counter for mock IDs
+  let mockRequestIdCounter = 0
+
+  // --- a tiny “builder” that supports .select().order() chains ------------
+  const builder: any = {
+    select() {
+      return builder
+    },
+    insert() {
+      // For insert, we need to return a chainable object that eventually resolves to a single result
+      return {
+        select: () => ({
+          single: () => Promise.resolve(okSingleResult),
+        }),
+      }
+    },
+    update() {
+      return builder
+    },
+    delete() {
+      return Promise.resolve(okResult)
+    },
+    eq() {
+      return builder
+    },
+    order() {
+      return builder
+    },
+    single() {
+      return Promise.resolve(okSingleResult)
+    },
+    // await supabase.from(...).select(...) ➜ we need to be then-able
+    then(onFulfilled: (v: typeof okResult) => any) {
+      return Promise.resolve(okResult).then(onFulfilled)
+    },
   }
 
   return {
-    from: () => mockQueryBuilder,
-    rpc: () => Promise.resolve(mockSingleResult),
+    from() {
+      return builder
+    },
+    rpc: (functionName: string, args: any) => {
+      if (functionName === "generate_next_request_id") {
+        mockRequestIdCounter++
+        const mockId = `CR${mockRequestIdCounter.toString().padStart(4, "0")}`
+        return Promise.resolve({ data: mockId, error: null })
+      }
+      if (functionName === "create_or_get_user") {
+        // Return a consistent mock UUID for user creation
+        return Promise.resolve({ data: "00000000-0000-0000-0000-000000000001", error: null })
+      }
+      // For other RPCs, return default mock single result
+      return Promise.resolve(okSingleResult)
+    },
   }
 }
 
 // Log warning if environment variables are missing
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn("⚠️ Supabase environment variables missing. Using mock client.")
+  console.warn("⚠️ Supabase environment variables missing. Using mock client for browser.")
 }
 
 if (!supabaseServiceKey) {

@@ -28,27 +28,20 @@ export async function getRequestById(id: string): Promise<ComponentRequest | nul
   return data
 }
 
+// This function is not directly used by the POST route, but kept for completeness
 export async function createRequest(
   requestData: Omit<ComponentRequest, "id" | "created_at" | "updated_at">,
 ): Promise<string | null> {
-  const { data, error } = await supabaseAdmin.rpc("create_component_request", {
-    p_request_name: requestData.request_name,
-    p_justification: requestData.justification,
-    p_requester_name: requestData.requester_name,
-    p_requester_email: requestData.requester_email,
-    p_category: requestData.category,
-    p_severity: requestData.severity,
-    p_project: requestData.project,
-    p_figma_link: requestData.figma_link,
-    p_source: requestData.source,
-  })
+  // Note: The actual POST route in app/api/requests/route.ts handles ID generation and user creation
+  // before inserting. This function is a simplified wrapper if you were to use it directly.
+  const { data, error } = await supabaseAdmin.from("component_requests").insert(requestData).select("id").single()
 
   if (error) {
     console.error("Error creating request:", error)
     return null
   }
 
-  return data
+  return data?.id || null
 }
 
 export async function updateRequestStatus(id: string, status: ComponentRequest["status"]): Promise<boolean> {
@@ -97,7 +90,7 @@ export async function getOrCreateUser(
   name: string,
   role: User["role"] = "Requester",
 ): Promise<User | null> {
-  const { data, error } = await supabaseAdmin.rpc("get_or_create_user", {
+  const { data, error } = await supabaseAdmin.rpc("create_or_get_user", {
     p_email: email,
     p_name: name,
     p_role: role,
@@ -108,11 +101,11 @@ export async function getOrCreateUser(
     return null
   }
 
-  // Fetch the complete user record
+  // Fetch the complete user record using the returned ID
   const { data: userData, error: userError } = await supabaseAdmin.from("users").select("*").eq("id", data).single()
 
   if (userError) {
-    console.error("Error fetching user data:", userError)
+    console.error("Error fetching user data after creation/retrieval:", userError)
     return null
   }
 
@@ -123,13 +116,14 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   const { data, error } = await supabaseAdmin.from("users").select("*").eq("email", email).single()
 
   if (error) {
-    console.error("Error fetching user:", error)
+    console.error("Error fetching user by email:", error)
     return null
   }
 
   return data
 }
 
+// This function is not directly used by the POST route, but kept for completeness
 export async function createUser(email: string, name?: string, role = "Requester") {
   try {
     const { data, error } = await supabaseAdmin.rpc("create_or_get_user", {
@@ -144,7 +138,7 @@ export async function createUser(email: string, name?: string, role = "Requester
 
     return data
   } catch (error) {
-    console.error("Error creating user:", error)
+    console.error("Error in createUser RPC call:", error)
     throw error
   }
 }
@@ -173,7 +167,10 @@ export async function validateApiKey(apiKey: string) {
       return null
     }
 
-    return data[0]
+    // The RPC returns a table of api_keys, but we need the user info from the join
+    // Assuming the RPC returns user_id, email, name, role directly as per the SQL function
+    const { user_id, email, name, role } = data[0]
+    return { user_id, email, name, role } // Return the user object
   } catch (error) {
     console.error("Error validating API key:", error)
     return null
