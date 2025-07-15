@@ -65,7 +65,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-slate-800/90 backdrop-blur-md border border-white/20 text-white shadow-2xl shadow-blue-500/20">
         <CardHeader className="text-center">
-          <img src="/placeholder-logo.png" alt="Logo" className="mx-auto h-16 w-16 mb-4" />
+          <img src="/placeholder-logo.svg" alt="Logo" className="mx-auto h-16 w-16 mb-4" />
           <CardTitle className="text-3xl font-bold">Welcome Back</CardTitle>
           <CardDescription className="text-slate-300">Sign in to manage your component requests.</CardDescription>
         </CardHeader>

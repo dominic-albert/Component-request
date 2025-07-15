@@ -835,7 +835,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                                             <Label className="text-sm font-medium text-slate-300">Design preview</Label>
                                             <div className="mt-2">
                                               <img
-                                                src={request.image_data || "/placeholder.png"}
+                                                src={request.image_data || "/placeholder.svg"}
                                                 alt={`Preview of ${request.request_name}`}
                                                 className="rounded-lg border border-white/20 max-w-full h-auto"
                                               />

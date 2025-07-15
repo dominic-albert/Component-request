@@ -1,13 +1,18 @@
 "use client"
 
 import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { type VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { TooltipProvider } from "@/components/ui/tooltip"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -238,20 +243,323 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
 )
 SidebarTrigger.displayName = "SidebarTrigger"
 
-const SidebarRail = React.forwardRef<
-  HTMLButtonElement,
-  React.ComponentProps<"button">
->(({ className, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
+const SidebarRail = React.forwardRef<HTMLButtonElement, React.ComponentProps<"button">>(
+  ({ className, ...props }, ref) => {
+    const { toggleSidebar } = useSidebar()
+
+    return (
+      <button
+        ref={ref}
+        data-sidebar="rail"
+        aria-label="Toggle Sidebar"
+        tabIndex={-1}
+        onClick={toggleSidebar}
+        title="Toggle Sidebar"
+        className={cn(
+          "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-sidebar-border group-data-[side=left]:-right-4 group-data-[side=right]:left-0 sm:flex",
+          "[[data-side=left]_&]:cursor-w-resize [[data-side=right]_&]:cursor-e-resize",
+          "group-data-[collapsible=offcanvas]:hidden",
+          className,
+        )}
+        {...props}
+      />
+    )
+  },
+)
+SidebarRail.displayName = "SidebarRail"
+
+const SidebarHeader = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(({ className, ...props }, ref) => {
+  const { state } = useSidebar()
 
   return (
-    <button
+    <div
       ref={ref}
-      data-sidebar="rail"
-      aria-label="Toggle Sidebar"
-      tabIndex={-1}
-      onClick={toggleSidebar}
-      title="Toggle Sidebar"
+      data-state={state}
       className={cn(
-        "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-sidebar-border group-data-[side=left]:-right-4 group-data-[side=right]:left-0 sm:flex",\
-        "[[data-side=left]_&]:cursor-w-resize [[data-side\
+        "flex items-center gap-2 p-4 text-sidebar-foreground",
+        "group-data-[collapsible=icon]:justify-center",
+        className,
+      )}
+      {...props}
+    />
+  )
+})
+SidebarHeader.displayName = "SidebarHeader"
+
+const SidebarTitle = React.forwardRef<HTMLParagraphElement, React.ComponentProps<"p">>(
+  ({ className, ...props }, ref) => {
+    const { state } = useSidebar()
+
+    return (
+      <p
+        ref={ref}
+        data-state={state}
+        className={cn("truncate text-lg font-semibold", "group-data-[collapsible=icon]:hidden", className)}
+        {...props}
+      />
+    )
+  },
+)
+SidebarTitle.displayName = "SidebarTitle"
+
+const SidebarDescription = React.forwardRef<HTMLParagraphElement, React.ComponentProps<"p">>(
+  ({ className, ...props }, ref) => {
+    const { state } = useSidebar()
+
+    return (
+      <p
+        ref={ref}
+        data-state={state}
+        className={cn("text-sm text-muted-foreground", "group-data-[collapsible=icon]:hidden", className)}
+        {...props}
+      />
+    )
+  },
+)
+SidebarDescription.displayName = "SidebarDescription"
+
+const SidebarFooter = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(({ className, ...props }, ref) => {
+  const { state } = useSidebar()
+
+  return (
+    <div
+      ref={ref}
+      data-state={state}
+      className={cn(
+        "flex items-center gap-2 p-4 text-sidebar-foreground",
+        "group-data-[collapsible=icon]:justify-center",
+        className,
+      )}
+      {...props}
+    />
+  )
+})
+SidebarFooter.displayName = "SidebarFooter"
+
+const sidebarItemVariants = cva(
+  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-accent hover:text-accent-foreground",
+  {
+    variants: {
+      active: {
+        true: "bg-accent text-accent-foreground",
+      },
+    },
+  },
+)
+
+type SidebarItemProps = React.ComponentProps<typeof Slot> &
+  VariantProps<typeof sidebarItemVariants> & {
+    icon?: React.ReactNode
+    label: string
+    shortcut?: string
+  }
+
+const SidebarItem = React.forwardRef<HTMLDivElement, SidebarItemProps>(
+  ({ active, icon, label, shortcut, className, ...props }, ref) => {
+    const { state } = useSidebar()
+
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Slot
+            ref={ref}
+            data-state={state}
+            className={cn(
+              sidebarItemVariants({ active }),
+              "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-3",
+              className,
+            )}
+            {...props}
+          >
+            {icon && (
+              <span
+                data-state={state}
+                className={cn(
+                  "group-data-[collapsible=icon]:text-lg group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6",
+                )}
+              >
+                {icon}
+              </span>
+            )}
+            <span data-state={state} className={cn("group-data-[collapsible=icon]:hidden")}>
+              {label}
+            </span>
+            {shortcut && (
+              <span
+                data-state={state}
+                className={cn(
+                  "ml-auto text-xs tracking-widest text-muted-foreground group-data-[collapsible=icon]:hidden",
+                )}
+              >
+                {shortcut}
+              </span>
+            )}
+          </Slot>
+        </TooltipTrigger>
+        {state === "collapsed" && <TooltipContent side="right">{label}</TooltipContent>}
+      </Tooltip>
+    )
+  },
+)
+SidebarItem.displayName = "SidebarItem"
+
+const SidebarItems = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(({ className, ...props }, ref) => {
+  return <div ref={ref} className={cn("p-2", className)} {...props} />
+})
+SidebarItems.displayName = "SidebarItems"
+
+const SidebarSection = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(({ className, ...props }, ref) => {
+  const { state } = useSidebar()
+
+  return (
+    <div
+      ref={ref}
+      data-state={state}
+      className={cn("flex flex-col gap-2 p-2", "group-data-[collapsible=icon]:items-center", className)}
+      {...props}
+    />
+  )
+})
+SidebarSection.displayName = "SidebarSection"
+
+const SidebarSectionTitle = React.forwardRef<HTMLParagraphElement, React.ComponentProps<"p">>(
+  ({ className, ...props }, ref) => {
+    const { state } = useSidebar()
+
+    return (
+      <p
+        ref={ref}
+        data-state={state}
+        className={cn(
+          "text-xs font-semibold uppercase text-muted-foreground",
+          "group-data-[collapsible=icon]:hidden",
+          className,
+        )}
+        {...props}
+      />
+    )
+  },
+)
+SidebarSectionTitle.displayName = "SidebarSectionTitle"
+
+const SidebarSectionSeparator = React.forwardRef<HTMLDivElement, React.ComponentProps<typeof Separator>>(
+  ({ className, ...props }, ref) => {
+    const { state } = useSidebar()
+
+    return (
+      <Separator
+        ref={ref}
+        data-state={state}
+        className={cn("my-4", "group-data-[collapsible=icon]:w-1/2", className)}
+        {...props}
+      />
+    )
+  },
+)
+SidebarSectionSeparator.displayName = "SidebarSectionSeparator"
+
+const SidebarButton = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<typeof Button> & {
+    icon?: React.ReactNode
+    label: string
+    shortcut?: string
+  }
+>(({ icon, label, shortcut, className, ...props }, ref) => {
+  const { state } = useSidebar()
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          ref={ref}
+          data-state={state}
+          className={cn(
+            "flex w-full items-center gap-2",
+            "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
+            className,
+          )}
+          {...props}
+        >
+          {icon && (
+            <span
+              data-state={state}
+              className={cn(
+                "group-data-[collapsible=icon]:text-lg group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6",
+              )}
+            >
+              {icon}
+            </span>
+          )}
+          <span data-state={state} className={cn("group-data-[collapsible=icon]:hidden")}>
+            {label}
+          </span>
+          {shortcut && (
+            <span
+              data-state={state}
+              className={cn(
+                "ml-auto text-xs tracking-widest text-muted-foreground group-data-[collapsible=icon]:hidden",
+              )}
+            >
+              {shortcut}
+            </span>
+          )}
+        </Button>
+      </TooltipTrigger>
+      {state === "collapsed" && <TooltipContent side="right">{label}</TooltipContent>}
+    </Tooltip>
+  )
+})
+SidebarButton.displayName = "SidebarButton"
+
+const SidebarInput = React.forwardRef<HTMLInputElement, React.ComponentProps<typeof Input>>(
+  ({ className, ...props }, ref) => {
+    const { state } = useSidebar()
+
+    return (
+      <Input
+        ref={ref}
+        data-state={state}
+        className={cn("group-data-[collapsible=icon]:hidden", "h-8", className)}
+        {...props}
+      />
+    )
+  },
+)
+SidebarInput.displayName = "SidebarInput"
+
+const SidebarSkeleton = React.forwardRef<HTMLDivElement, React.ComponentProps<typeof Skeleton>>(
+  ({ className, ...props }, ref) => {
+    const { state } = useSidebar()
+
+    return (
+      <Skeleton
+        ref={ref}
+        data-state={state}
+        className={cn("group-data-[collapsible=icon]:hidden", "h-8 w-full", className)}
+        {...props}
+      />
+    )
+  },
+)
+SidebarSkeleton.displayName = "SidebarSkeleton"
+
+export {
+  SidebarProvider,
+  Sidebar,
+  SidebarTrigger,
+  SidebarRail,
+  SidebarHeader,
+  SidebarTitle,
+  SidebarDescription,
+  SidebarFooter,
+  SidebarItems,
+  SidebarItem,
+  SidebarSection,
+  SidebarSectionTitle,
+  SidebarSectionSeparator,
+  SidebarButton,
+  SidebarInput,
+  SidebarSkeleton,
+  useSidebar,
+}
