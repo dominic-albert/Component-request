@@ -109,7 +109,7 @@ export interface ComponentRequest {
   requester_id?: string
   requester_name: string
   requester_email: string
-  status: "Pending" | "In Progress" | "Completed" | "Cancelled"
+  status: "Pending" | "In Progress" | "Completed" | "Cancelled" | "Denied" // Added Denied
   denial_reason?: string
   category: "Form" | "Navigation" | "Display" | "Input" | "Layout"
   severity: "Low" | "Medium" | "High" | "Urgent"

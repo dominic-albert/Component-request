@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false })
 
     if (error) {
-      console.error("Database error fetching requests:", error)
+      console.error("Database error fetching requests in GET /api/requests:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    console.log("Incoming POST request body:", body) // Log incoming body
     const authHeader = request.headers.get("authorization")
 
     let userId: string | null = null
@@ -33,6 +34,9 @@ export async function POST(request: NextRequest) {
       const user = await validateApiKey(apiKey)
       if (user) {
         userId = user.user_id
+        console.log("API Key validated. User ID:", userId)
+      } else {
+        console.warn("API Key provided but invalid or user not found.")
       }
     }
 
@@ -43,12 +47,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to generate request ID" }, { status: 500 })
     }
     if (!requestId) {
-      console.error("Generated request ID is null or undefined.")
+      console.error("Generated request ID is null or undefined from RPC.")
       return NextResponse.json({ error: "Failed to generate request ID: ID is null" }, { status: 500 })
     }
+    console.log("Generated Request ID:", requestId)
 
     // Create or get user if email is provided and userId is not already set by API key
     if (body.requesterEmail && !userId) {
+      console.log("Attempting to create or get user for email:", body.requesterEmail)
       const { data: newUserId, error: userError } = await supabaseAdmin.rpc("create_or_get_user", {
         p_email: body.requesterEmail,
         p_name: body.requesterName,
@@ -61,6 +67,7 @@ export async function POST(request: NextRequest) {
         // For now, we'll proceed, but requester_id will be null.
       } else {
         userId = newUserId
+        console.log("User created or retrieved. User ID:", userId)
       }
     }
 
@@ -84,6 +91,7 @@ export async function POST(request: NextRequest) {
       selection_data: body.selectionData,
       source: body.source || "manual",
     }
+    console.log("Prepared request data for insertion:", requestData) // Log data before insert
 
     const { data, error } = await supabaseAdmin.from("component_requests").insert(requestData).select().single()
 
@@ -92,6 +100,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    console.log("Request successfully inserted:", data)
     return NextResponse.json(data, { status: 201 })
   } catch (error) {
     console.error("Unexpected error in POST /api/requests:", error)

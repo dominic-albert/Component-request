@@ -44,10 +44,15 @@ export async function createRequest(
   return data?.id || null
 }
 
-export async function updateRequestStatus(id: string, status: ComponentRequest["status"]): Promise<boolean> {
+export async function updateRequestStatus(
+  id: string,
+  status: ComponentRequest["status"],
+  denialReason?: string,
+): Promise<boolean> {
   const { data, error } = await supabaseAdmin.rpc("update_request_status", {
     p_request_id: id,
     p_status: status,
+    p_denial_reason: denialReason || null, // Pass denial reason
   })
 
   if (error) {

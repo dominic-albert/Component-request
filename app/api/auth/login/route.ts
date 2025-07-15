@@ -1,28 +1,34 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createUser } from "@/lib/api-utils"
+import { getOrCreateUser } from "@/lib/api-utils"
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, role } = await request.json()
+    const { email } = await request.json()
 
     if (!email) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
     }
 
-    // Extract name from email
-    const name = email
-      .split("@")[0]
-      .replace(/[._]/g, " ")
-      .replace(/\b\w/g, (l: string) => l.toUpperCase())
+    // In a real application, you'd use Supabase Auth's signInWithOtp or similar.
+    // For this example, we're simulating a login by getting/creating a user.
+    const user = await getOrCreateUser(email, email.split("@")[0], "Requester") // Default role
 
-    const userId = await createUser(email, name, role || "Requester")
+    if (!user) {
+      return NextResponse.json({ error: "Failed to authenticate user" }, { status: 500 })
+    }
 
+    // In a real app, you'd return a session token or similar.
+    // For this example, we return basic user info.
     return NextResponse.json({
-      success: true,
-      user: { id: userId, email, name, role: role || "Requester" },
+      message: "Login successful",
+      user: {
+        email: user.email,
+        role: user.role,
+        id: user.id,
+      },
     })
   } catch (error) {
-    console.error("Login error:", error)
-    return NextResponse.json({ error: "Failed to login" }, { status: 500 })
+    console.error("Login API error:", error)
+    return NextResponse.json({ error: "Internal server error during login" }, { status: 500 })
   }
 }

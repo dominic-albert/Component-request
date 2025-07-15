@@ -26,6 +26,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useToast } from "@/hooks/use-toast" // Import useToast
+import { Toaster } from "@/components/ui/toaster" // Import Toaster
 
 interface UserInfo {
   email: string
@@ -44,7 +46,7 @@ interface ComponentRequest {
   requester_id: string
   requester_name: string
   requester_email: string
-  status: "Pending" | "In Progress" | "Completed"
+  status: "Pending" | "In Progress" | "Completed" | "Denied" // Added "Denied" status
   denial_reason: string
   created_at: string
   updated_at: string
@@ -59,6 +61,7 @@ const statusColors = {
   Pending: "bg-gray-500/20 text-gray-300 border-gray-500/30",
   "In Progress": "bg-blue-500/20 text-blue-300 border-blue-500/30",
   Completed: "bg-green-500/20 text-green-300 border-green-500/30",
+  Denied: "bg-red-500/20 text-red-300 border-red-500/30", // Added color for Denied
 }
 
 const priorityColors = {
@@ -72,6 +75,7 @@ const statusIcons = {
   Pending: AlertCircle,
   "In Progress": Clock,
   Completed: CheckCircle,
+  Denied: AlertCircle, // Using AlertCircle for Denied as well
 }
 
 export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDashboardProps) {
@@ -103,6 +107,8 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
   const [apiKey, setApiKey] = useState("")
   const [isGeneratingKey, setIsGeneratingKey] = useState(false)
 
+  const { toast } = useToast() // Initialize useToast
+
   // Load requests on component mount
   useEffect(() => {
     loadRequests()
@@ -116,26 +122,34 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
         const data = await response.json()
         setRequests(data)
       } else {
-        console.error("Failed to load requests:", response.statusText)
-        // Start with empty array if API fails
+        console.error("Failed to load requests:", response.status, response.statusText)
+        toast({
+          title: "Error loading requests",
+          description: `Failed to fetch requests: ${response.statusText || "Unknown error"}`,
+          variant: "destructive",
+        })
         setRequests([])
       }
     } catch (error) {
       console.error("Failed to load requests:", error)
-      // Start with empty array if API fails
+      toast({
+        title: "Network Error",
+        description: "Could not connect to the server to load requests.",
+        variant: "destructive",
+      })
       setRequests([])
     } finally {
       setLoading(false)
     }
   }
 
-  // Generate next ID
-  const generateNextId = () => {
-    const existingIds = requests.map((r) => Number.parseInt(r.id.replace("CR", "")))
-    const maxId = Math.max(...existingIds, 0)
-    const nextId = maxId + 1
-    return `CR${nextId.toString().padStart(4, "0")}`
-  }
+  // Generate next ID (this is now handled by the backend RPC function)
+  // const generateNextId = () => {
+  //   const existingIds = requests.map((r) => Number.parseInt(r.id.replace("CR", "")))
+  //   const maxId = Math.max(...existingIds, 0)
+  //   const nextId = maxId + 1
+  //   return `CR${nextId.toString().padStart(4, "0")}`
+  // }
 
   // Extract name from email for display
   const getUserName = (email: string) => {
@@ -157,7 +171,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
     })
     .sort((a, b) => {
       // Sort by status priority: Pending (newest first), In Progress (newest first), Completed (oldest first)
-      const statusOrder = { Pending: 0, "In Progress": 1, Completed: 2 }
+      const statusOrder = { Pending: 0, "In Progress": 1, Completed: 2, Denied: 3 } // Added Denied
       const statusDiff =
         statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder]
 
@@ -167,8 +181,9 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       const dateA = new Date(a.created_at).getTime()
       const dateB = new Date(b.created_at).getTime()
 
-      if (a.status === "Completed") {
-        return dateA - dateB // Completed: oldest first
+      if (a.status === "Completed" || a.status === "Denied") {
+        // Apply oldest first to Denied as well
+        return dateA - dateB // Completed/Denied: oldest first
       } else {
         return dateB - dateA // Pending & In Progress: newest first
       }
@@ -202,6 +217,17 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
           request.id === selectedRequest.id ? updatedRequest : request,
         )
         setRequests(updatedRequests)
+        toast({
+          title: "Status Updated",
+          description: `Request ${selectedRequest.id} status changed to ${updateStatus}.`,
+        })
+      } else {
+        console.error("Failed to update request status:", response.status, response.statusText)
+        toast({
+          title: "Update Failed",
+          description: `Could not update status: ${response.statusText || "Unknown error"}`,
+          variant: "destructive",
+        })
       }
 
       setIsUpdateDialogOpen(false)
@@ -210,6 +236,11 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       setDenialReason("")
     } catch (error) {
       console.error("Failed to update request:", error)
+      toast({
+        title: "Network Error",
+        description: "Could not connect to the server to update request.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -219,34 +250,51 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       pending: requests.filter((r) => r.status === "Pending").length,
       inProgress: requests.filter((r) => r.status === "In Progress").length,
       completed: requests.filter((r) => r.status === "Completed").length,
+      denied: requests.filter((r) => r.status === "Denied").length, // Added denied count
     }
   }
 
   const statusCounts = getStatusCounts()
 
   const handleManualRequestSubmit = async () => {
-    try {
-      const newRequest = {
-        requestName: manualRequestForm.requestName,
-        justification: manualRequestForm.justification,
-        requesterName: manualRequestForm.requesterName,
-        requesterEmail: manualRequestForm.requesterEmail,
-        severity: manualRequestForm.severity,
-        category: manualRequestForm.category,
-        figmaLink: manualRequestForm.figmaLink,
-        source: "manual",
-        project: "Manual",
-      }
+    const newRequest = {
+      requestName: manualRequestForm.requestName,
+      justification: manualRequestForm.justification,
+      requesterName: manualRequestForm.requesterName,
+      requesterEmail: manualRequestForm.requesterEmail,
+      severity: manualRequestForm.severity,
+      category: manualRequestForm.category,
+      figmaLink: manualRequestForm.figmaLink,
+      source: "manual",
+      project: "Manual",
+    }
 
+    console.log("Attempting to create new request with data:", newRequest) // Log data being sent
+
+    try {
       const response = await fetch("/api/requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newRequest),
       })
 
+      console.log("Response status:", response.status) // Log response status
+      const responseData = await response.json() // Always try to parse JSON for more details
+      console.log("Response data:", responseData) // Log response data
+
       if (response.ok) {
-        const createdRequest = await response.json()
-        setRequests([createdRequest, ...requests])
+        setRequests([responseData, ...requests]) // Use responseData directly
+        toast({
+          title: "Request Created!",
+          description: `Component request "${responseData.request_name}" has been submitted.`,
+        })
+      } else {
+        console.error("Failed to create request:", response.status, response.statusText, responseData)
+        toast({
+          title: "Creation Failed",
+          description: `Could not create request: ${responseData.error || response.statusText || "Unknown error"}`,
+          variant: "destructive",
+        })
       }
 
       setIsManualRequestOpen(false)
@@ -261,6 +309,11 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       })
     } catch (error) {
       console.error("Failed to create request:", error)
+      toast({
+        title: "Network Error",
+        description: "Could not connect to the server to create request.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -273,9 +326,25 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       if (response.ok) {
         const updatedRequests = requests.filter((r) => r.id !== requestId)
         setRequests(updatedRequests)
+        toast({
+          title: "Request Deleted",
+          description: `Request ${requestId} has been removed.`,
+        })
+      } else {
+        console.error("Failed to delete request:", response.status, response.statusText)
+        toast({
+          title: "Deletion Failed",
+          description: `Could not delete request: ${response.statusText || "Unknown error"}`,
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("Failed to delete request:", error)
+      toast({
+        title: "Network Error",
+        description: "Could not connect to the server to delete request.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -302,9 +371,25 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
       if (response.ok) {
         const data = await response.json()
         setApiKey(data.apiKey)
+        toast({
+          title: "API Key Generated",
+          description: "Your new API key has been successfully generated.",
+        })
+      } else {
+        console.error("Failed to generate API key:", response.status, response.statusText)
+        toast({
+          title: "API Key Generation Failed",
+          description: `Could not generate API key: ${response.statusText || "Unknown error"}`,
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("Failed to generate API key:", error)
+      toast({
+        title: "Network Error",
+        description: "Could not connect to the server to generate API key.",
+        variant: "destructive",
+      })
     } finally {
       setIsGeneratingKey(false)
     }
@@ -370,7 +455,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                 <DropdownMenuSeparator className="border-t border-white/10" />
                 <DropdownMenuItem
                   className="px-4 py-2 cursor-pointer hover:bg-white/10 text-slate-300 hover:text-white transition-colors duration-200"
-                  onClick={() => setIsApiKeyDialogOpen(true)}
+                  onSelect={() => setIsApiKeyDialogOpen(true)}
                 >
                   <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -429,6 +514,15 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
               <div className="text-xl font-semibold text-white">{statusCounts.completed}</div>
             </div>
           </div>
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-3 hover:bg-white/10 transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-500/10 min-w-[140px] flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <div className="text-xs font-medium text-slate-300">Denied</div>
+                <AlertCircle className="h-3 w-3 text-red-400" />
+              </div>
+              <div className="text-xl font-semibold text-white">{statusCounts.denied}</div>
+            </div>
+          </div>
         </div>
 
         {/* Filters and Search */}
@@ -474,6 +568,9 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                   </SelectItem>
                   <SelectItem value="Completed" className="text-white hover:bg-white/10 focus:bg-white/10">
                     Completed
+                  </SelectItem>
+                  <SelectItem value="Denied" className="text-white hover:bg-white/10 focus:bg-white/10">
+                    Denied
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -622,7 +719,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                                 onClick={() => {
                                   setSelectedRequest(request)
                                   setUpdateStatus(request.status)
-                                  setDenialReason(request.denial_reason)
+                                  setDenialReason(request.denial_reason || "") // Ensure denialReason is not undefined
                                   setIsUpdateDialogOpen(true)
                                 }}
                                 className="px-4 py-2 text-xs border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all duration-200 backdrop-blur-sm rounded-lg"
@@ -738,7 +835,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                                             <Label className="text-sm font-medium text-slate-300">Design preview</Label>
                                             <div className="mt-2">
                                               <img
-                                                src={request.image_data || "/placeholder.svg"}
+                                                src={request.image_data || "/placeholder.png"}
                                                 alt={`Preview of ${request.request_name}`}
                                                 className="rounded-lg border border-white/20 max-w-full h-auto"
                                               />
@@ -889,9 +986,24 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                     <SelectItem value="Pending">Pending</SelectItem>
                     <SelectItem value="In Progress">In progress</SelectItem>
                     <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Denied">Denied</SelectItem> {/* Added Denied option */}
                   </SelectContent>
                 </Select>
               </div>
+              {updateStatus === "Denied" && (
+                <div>
+                  <Label htmlFor="denial-reason" className="text-sm font-medium text-slate-300">
+                    Reason for Denial *
+                  </Label>
+                  <Textarea
+                    id="denial-reason"
+                    placeholder="Explain why this request is being denied..."
+                    value={denialReason}
+                    onChange={(e) => setDenialReason(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm mt-1 min-h-[80px] resize-vertical"
+                  />
+                </div>
+              )}
             </div>
             <DialogFooter className="px-6 py-4 border-t border-white/10 flex justify-end gap-3">
               <Button
@@ -903,6 +1015,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
               </Button>
               <Button
                 onClick={handleStatusUpdate}
+                disabled={updateStatus === "Denied" && !denialReason.trim()} // Disable if denied and no reason
                 className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium shadow-lg shadow-blue-500/25 transition-all duration-200 hover:shadow-blue-500/40"
               >
                 Update
@@ -1281,6 +1394,10 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
                       <Button
                         onClick={() => {
                           navigator.clipboard.writeText(apiKey)
+                          toast({
+                            title: "Copied!",
+                            description: "API key copied to clipboard.",
+                          })
                         }}
                         size="sm"
                         className="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs"
@@ -1373,6 +1490,7 @@ export function ComponentRequestDashboard({ user, onLogout }: ComponentRequestDa
           </DialogContent>
         </Dialog>
       </div>
+      <Toaster /> {/* Add Toaster component at the root of your app */}
     </div>
   )
 }
