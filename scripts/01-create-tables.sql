@@ -3,10 +3,10 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL CHECK (role IN ('Requester', 'Creator')),
+    role VARCHAR(50) NOT NULL DEFAULT 'Requester',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -15,11 +15,15 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS component_requests (
     id VARCHAR(50) PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    priority VARCHAR(20) NOT NULL CHECK (priority IN ('Low', 'Medium', 'High')),
-    status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'In Progress', 'Completed', 'Cancelled')),
-    requester_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    creator_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    description TEXT,
+    priority VARCHAR(20) DEFAULT 'Medium',
+    status VARCHAR(20) DEFAULT 'Pending',
+    requester_email VARCHAR(255) NOT NULL,
+    requester_name VARCHAR(255) NOT NULL,
+    assigned_to VARCHAR(255),
+    due_date DATE,
+    tags TEXT[],
+    attachments JSONB DEFAULT '[]',
     denial_reason TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -27,22 +31,21 @@ CREATE TABLE IF NOT EXISTS component_requests (
 
 -- Create api_keys table
 CREATE TABLE IF NOT EXISTS api_keys (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    key_hash VARCHAR(255) NOT NULL UNIQUE,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    last_used_at TIMESTAMP WITH TIME ZONE
+    key_hash VARCHAR(255) UNIQUE NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    last_used_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_component_requests_requester_id ON component_requests(requester_id);
-CREATE INDEX IF NOT EXISTS idx_component_requests_creator_id ON component_requests(creator_id);
 CREATE INDEX IF NOT EXISTS idx_component_requests_status ON component_requests(status);
+CREATE INDEX IF NOT EXISTS idx_component_requests_requester_email ON component_requests(requester_email);
 CREATE INDEX IF NOT EXISTS idx_component_requests_created_at ON component_requests(created_at);
-CREATE INDEX IF NOT EXISTS idx_api_keys_user_id ON api_keys(user_id);
 CREATE INDEX IF NOT EXISTS idx_api_keys_key_hash ON api_keys(key_hash);
+CREATE INDEX IF NOT EXISTS idx_api_keys_user_id ON api_keys(user_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 -- Create updated_at trigger function

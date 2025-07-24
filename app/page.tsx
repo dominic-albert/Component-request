@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react"
 
 interface UserInfo {
   email: string
+  name: string
   role: string
 }
 
@@ -16,13 +17,13 @@ export default function Home() {
 
   useEffect(() => {
     // On mount, try to load user from session storage
-    const storedUser = sessionStorage.getItem("user")
+    const storedUser = sessionStorage.getItem("currentUser")
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser))
       } catch (e) {
         console.error("Failed to parse user from session storage", e)
-        sessionStorage.removeItem("user")
+        sessionStorage.removeItem("currentUser")
       }
     }
     setLoading(false)
@@ -30,18 +31,18 @@ export default function Home() {
 
   const handleLogin = (loggedInUser: UserInfo) => {
     setUser(loggedInUser)
-    sessionStorage.setItem("user", JSON.stringify(loggedInUser))
+    sessionStorage.setItem("currentUser", JSON.stringify(loggedInUser))
   }
 
   const handleLogout = () => {
     setUser(null)
-    sessionStorage.removeItem("user")
+    sessionStorage.removeItem("currentUser")
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-white">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="flex items-center gap-3 text-gray-700">
           <Loader2 className="h-6 w-6 animate-spin" />
           <span>Loading application...</span>
         </div>

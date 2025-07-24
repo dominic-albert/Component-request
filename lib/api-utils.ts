@@ -85,7 +85,6 @@ export async function updateRequestStatus(
   }
 
   try {
-    // Direct update instead of RPC to avoid JSON parsing issues
     const updateData: any = {
       status,
       updated_at: new Date().toISOString(),
@@ -131,117 +130,34 @@ export async function deleteRequest(id: string): Promise<boolean> {
 }
 
 export async function generateNextRequestId(): Promise<string> {
-  // Always generate a fallback ID to avoid dependency on RPC functions
+  // Generate a simple ID without database dependency
   const timestamp = Date.now()
   const random = Math.floor(Math.random() * 1000)
-  const fallbackId = `REQ-${timestamp}-${random}`
+  const today = new Date().toISOString().slice(0, 10).replace(/-/g, "")
 
-  if (!isSupabaseConfigured) {
-    console.warn("Supabase not configured, using fallback ID")
-    return fallbackId
-  }
-
-  try {
-    // Try to get existing requests to generate a proper sequential ID
-    const { data, error } = await supabaseAdmin
-      .from("component_requests")
-      .select("id")
-      .order("created_at", { ascending: false })
-      .limit(1)
-
-    if (error) {
-      console.error("Error fetching last request, using fallback ID:", error)
-      return fallbackId
-    }
-
-    // Generate sequential ID based on existing requests
-    const today = new Date().toISOString().slice(0, 10).replace(/-/g, "")
-    const { data: todayRequests } = await supabaseAdmin
-      .from("component_requests")
-      .select("id")
-      .like("id", `REQ-${today}-%`)
-
-    const nextNumber = (todayRequests?.length || 0) + 1
-    return `REQ-${today}-${nextNumber.toString().padStart(4, "0")}`
-  } catch (error) {
-    console.error("Error generating request ID, using fallback:", error)
-    return fallbackId
-  }
+  return `REQ-${today}-${timestamp}-${random}`
 }
 
-// User management functions with direct table operations instead of RPC
+// Simplified user management - no database required for basic functionality
 export async function getOrCreateUser(
   email: string,
   name: string,
   role: User["role"] = "Requester",
 ): Promise<User | null> {
-  if (!isSupabaseConfigured) {
-    console.warn("Supabase not configured")
-    return null
-  }
-
-  try {
-    console.log("Attempting to get or create user:", { email, name, role })
-
-    // First try to get existing user
-    const { data: existingUser, error: getUserError } = await supabaseAdmin
-      .from("users")
-      .select("*")
-      .eq("email", email)
-      .single()
-
-    if (existingUser && !getUserError) {
-      console.log("Found existing user:", existingUser)
-      return existingUser
-    }
-
-    console.log("User not found, creating new user")
-
-    // If user doesn't exist, create new one
-    const newUser = {
-      email,
-      name: name || email.split("@")[0],
-      role,
-    }
-
-    const { data: createdUser, error: createError } = await supabaseAdmin
-      .from("users")
-      .insert(newUser)
-      .select("*")
-      .single()
-
-    if (createError) {
-      console.error("Error creating user:", createError)
-      return null
-    }
-
-    console.log("Successfully created user:", createdUser)
-    return createdUser
-  } catch (error) {
-    console.error("Error in getOrCreateUser:", error)
-    return null
+  // For the simplified version, we'll just return a mock user object
+  // In a real application, you might still want to store this in the database
+  return {
+    id: `user_${Date.now()}`,
+    email,
+    name,
+    role,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   }
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
-  if (!isSupabaseConfigured) {
-    console.warn("Supabase not configured")
-    return null
-  }
-
-  try {
-    const { data, error } = await supabaseAdmin.from("users").select("*").eq("email", email).single()
-
-    if (error) {
-      console.error("Error fetching user by email:", error)
-      return null
-    }
-
-    return data
-  } catch (error) {
-    console.error("Error in getUserByEmail:", error)
-    return null
-  }
+  return getOrCreateUser(email, email.split("@")[0], "Requester")
 }
 
 export async function createUser(email: string, name?: string, role = "Requester") {
@@ -269,7 +185,6 @@ export async function validateApiKey(apiKey: string) {
   try {
     const keyHash = hashApiKey(apiKey)
 
-    // Direct table join instead of RPC
     const { data, error } = await supabaseAdmin
       .from("api_keys")
       .select(`
@@ -290,7 +205,6 @@ export async function validateApiKey(apiKey: string) {
       return null
     }
 
-    // Update last_used_at
     await supabaseAdmin.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("key_hash", keyHash)
 
     const user = data.users as any
@@ -353,7 +267,7 @@ export async function revokeApiKey(keyId: string): Promise<boolean> {
   }
 }
 
-// Statistics functions with direct table queries
+// Statistics functions
 export async function getRequestStats() {
   if (!isSupabaseConfigured) {
     console.warn("Supabase not configured")
@@ -367,7 +281,6 @@ export async function getRequestStats() {
   }
 
   try {
-    // Direct query instead of RPC
     const { data: requests, error } = await supabaseAdmin.from("component_requests").select("status")
 
     if (error) {
