@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "CRs - Component Request System",
-  description: "Component Request System for managing design team requests",
+  description: "Manage and track component requests for your design system",
     generator: 'v0.dev'
 }
 

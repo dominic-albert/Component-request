@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ComponentRequestDashboard } from "@/components/component-request-dashboard"
 import { LoginScreen } from "@/components/login-screen"
+import { ComponentRequestDashboard } from "@/components/component-request-dashboard"
 
 interface UserInfo {
   email: string
@@ -11,49 +11,47 @@ interface UserInfo {
 
 export default function Home() {
   const [user, setUser] = useState<UserInfo | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
 
+  // Check for saved login on mount
   useEffect(() => {
-    // Check for remembered user
-    const remembered = localStorage.getItem("rememberedUser")
-    if (remembered) {
-      try {
-        const userData = JSON.parse(remembered)
-        console.log("Loading remembered user:", userData)
-        setUser(userData)
-      } catch (e) {
-        console.error("Failed to parse remembered user:", e)
-        localStorage.removeItem("rememberedUser")
-      }
+    const savedUser = localStorage.getItem("selectedUser")
+    const savedRole = localStorage.getItem("selectedRole")
+    const rememberMe = localStorage.getItem("rememberMe") === "true"
+
+    if (rememberMe && savedUser && savedRole) {
+      setUser({ email: savedUser, role: savedRole })
+      console.log("Auto-logged in user:", { email: savedUser, role: savedRole })
     }
-    setLoading(false)
+
+    setIsLoading(false)
   }, [])
 
-  const handleLogin = (loggedInUser: UserInfo) => {
-    console.log("User logged in:", loggedInUser)
-    setUser(loggedInUser)
+  const handleLogin = (userInfo: UserInfo) => {
+    console.log("User logged in:", userInfo)
+    setUser(userInfo)
   }
 
   const handleLogout = () => {
     console.log("User logged out")
     setUser(null)
-    localStorage.removeItem("rememberedUser")
+    // Clear saved preferences
+    localStorage.removeItem("selectedUser")
+    localStorage.removeItem("selectedRole")
+    localStorage.removeItem("rememberMe")
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-white">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-          <span>Loading CRs...</span>
-        </div>
+        <div className="text-white">Loading...</div>
       </div>
     )
   }
 
-  return (
-    <>
-      {user ? <ComponentRequestDashboard user={user} onLogout={handleLogout} /> : <LoginScreen onLogin={handleLogin} />}
-    </>
-  )
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />
+  }
+
+  return <ComponentRequestDashboard user={user} onLogout={handleLogout} />
 }
