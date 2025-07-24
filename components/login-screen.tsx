@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -28,10 +29,10 @@ const USER_OPTIONS = [
 ]
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
-  const [selectedUser, setSelectedUser] = useState<string>("")
-  const [role, setRole] = useState<string>("Requester")
-  const [saveForNext, setSaveForNext] = useState<boolean>(false)
-  const [loading, setLoading] = useState<boolean>(false)
+  const [selectedUser, setSelectedUser] = useState("")
+  const [role, setRole] = useState("Requester")
+  const [saveForNext, setSaveForNext] = useState(false)
+  const [loading, setLoading] = useState(false)
   const { toast } = useToast()
 
   // Load saved preferences on component mount
@@ -106,16 +107,6 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     }
   }
 
-  const handleUserChange = (value: string) => {
-    console.log("User selected:", value)
-    setSelectedUser(value)
-  }
-
-  const handleRoleChange = (value: string) => {
-    console.log("Role selected:", value)
-    setRole(value)
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-white shadow-xl border-0">
@@ -134,35 +125,36 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               <Label htmlFor="user" className="text-sm font-medium text-gray-700">
                 Select User *
               </Label>
-              <Select value={selectedUser} onValueChange={handleUserChange}>
+              <Select value={selectedUser} onValueChange={setSelectedUser}>
                 <SelectTrigger className="w-full px-4 py-3 border border-gray-300 rounded-lg mt-1">
                   <SelectValue placeholder="Choose your name" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-xl max-h-60">
+                <SelectContent>
                   {USER_OPTIONS.map((user) => (
-                    <SelectItem key={user.value} value={user.value} className="hover:bg-gray-50">
+                    <SelectItem key={user.value} value={user.value}>
                       {user.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {selectedUser && (
+                <p className="text-xs text-blue-600 mt-1">
+                  Selected: {USER_OPTIONS.find((u) => u.value === selectedUser)?.label}
+                </p>
+              )}
             </div>
 
             <div>
               <Label htmlFor="role" className="text-sm font-medium text-gray-700">
                 Login as *
               </Label>
-              <Select value={role} onValueChange={handleRoleChange}>
+              <Select value={role} onValueChange={setRole}>
                 <SelectTrigger className="w-full px-4 py-3 border border-gray-300 rounded-lg mt-1">
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-xl">
-                  <SelectItem value="Requester" className="hover:bg-gray-50">
-                    Requester
-                  </SelectItem>
-                  <SelectItem value="Creator" className="hover:bg-gray-50">
-                    Creator
-                  </SelectItem>
+                <SelectContent>
+                  <SelectItem value="Requester">Requester</SelectItem>
+                  <SelectItem value="Creator">Creator</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -200,11 +192,6 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 ? "Your selection will be remembered"
                 : "Quick access - no password required"}
             </p>
-            {selectedUser && (
-              <p className="text-xs text-blue-600 mt-1">
-                Selected: {USER_OPTIONS.find((u) => u.value === selectedUser)?.label}
-              </p>
-            )}
           </div>
         </CardContent>
       </Card>
