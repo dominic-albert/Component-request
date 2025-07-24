@@ -2,8 +2,16 @@ import { supabaseAdmin } from "./supabase"
 import type { ComponentRequest, User, ApiKey } from "./supabase"
 import { createHash } from "crypto"
 
+// Check if Supabase is properly configured
+const isSupabaseConfigured = !!supabaseAdmin
+
 // Request management functions
 export async function getAllRequests(): Promise<ComponentRequest[]> {
+  if (!isSupabaseConfigured) {
+    console.warn("Supabase not configured, returning empty array")
+    return []
+  }
+
   try {
     const { data, error } = await supabaseAdmin
       .from("component_requests")
@@ -23,6 +31,11 @@ export async function getAllRequests(): Promise<ComponentRequest[]> {
 }
 
 export async function getRequestById(id: string): Promise<ComponentRequest | null> {
+  if (!isSupabaseConfigured) {
+    console.warn("Supabase not configured")
+    return null
+  }
+
   try {
     const { data, error } = await supabaseAdmin.from("component_requests").select("*").eq("id", id).single()
 
@@ -41,6 +54,11 @@ export async function getRequestById(id: string): Promise<ComponentRequest | nul
 export async function createRequest(
   requestData: Omit<ComponentRequest, "id" | "created_at" | "updated_at">,
 ): Promise<string | null> {
+  if (!isSupabaseConfigured) {
+    console.warn("Supabase not configured")
+    return null
+  }
+
   try {
     const { data, error } = await supabaseAdmin.from("component_requests").insert(requestData).select("id").single()
 
@@ -61,26 +79,27 @@ export async function updateRequestStatus(
   status: ComponentRequest["status"],
   denialReason?: string,
 ): Promise<boolean> {
+  if (!isSupabaseConfigured) {
+    console.warn("Supabase not configured")
+    return false
+  }
+
   try {
-    // Try using RPC function first
-    const { data, error } = await supabaseAdmin.rpc("update_request_status", {
-      p_request_id: id,
-      p_status: status,
-      p_denial_reason: denialReason || null,
-    })
+    // Direct update instead of RPC to avoid JSON parsing issues
+    const updateData: any = {
+      status,
+      updated_at: new Date().toISOString(),
+    }
+
+    if (denialReason) {
+      updateData.denial_reason = denialReason
+    }
+
+    const { error } = await supabaseAdmin.from("component_requests").update(updateData).eq("id", id)
 
     if (error) {
-      console.error("RPC error, falling back to direct update:", error)
-      // Fallback to direct update
-      const updateData: any = { status, updated_at: new Date().toISOString() }
-      if (denialReason) updateData.denial_reason = denialReason
-
-      const { error: updateError } = await supabaseAdmin.from("component_requests").update(updateData).eq("id", id)
-
-      if (updateError) {
-        console.error("Error updating request status:", updateError)
-        return false
-      }
+      console.error("Error updating request status:", error)
+      return false
     }
 
     return true
@@ -91,6 +110,11 @@ export async function updateRequestStatus(
 }
 
 export async function deleteRequest(id: string): Promise<boolean> {
+  if (!isSupabaseConfigured) {
+    console.warn("Supabase not configured")
+    return false
+  }
+
   try {
     const { error } = await supabaseAdmin.from("component_requests").delete().eq("id", id)
 
@@ -107,35 +131,58 @@ export async function deleteRequest(id: string): Promise<boolean> {
 }
 
 export async function generateNextRequestId(): Promise<string> {
+  // Always generate a fallback ID to avoid dependency on RPC functions
+  const timestamp = Date.now()
+  const random = Math.floor(Math.random() * 1000)
+  const fallbackId = `REQ-${timestamp}-${random}`
+
+  if (!isSupabaseConfigured) {
+    console.warn("Supabase not configured, using fallback ID")
+    return fallbackId
+  }
+
   try {
-    // Try RPC function first
-    const { data, error } = await supabaseAdmin.rpc("generate_next_request_id")
+    // Try to get existing requests to generate a proper sequential ID
+    const { data, error } = await supabaseAdmin
+      .from("component_requests")
+      .select("id")
+      .order("created_at", { ascending: false })
+      .limit(1)
 
     if (error) {
-      console.error("RPC error, generating fallback ID:", error)
-      // Fallback: generate a simple ID
-      const timestamp = Date.now()
-      const random = Math.floor(Math.random() * 1000)
-      return `REQ-${timestamp}-${random}`
+      console.error("Error fetching last request, using fallback ID:", error)
+      return fallbackId
     }
 
-    return data || `REQ-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+    // Generate sequential ID based on existing requests
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, "")
+    const { data: todayRequests } = await supabaseAdmin
+      .from("component_requests")
+      .select("id")
+      .like("id", `REQ-${today}-%`)
+
+    const nextNumber = (todayRequests?.length || 0) + 1
+    return `REQ-${today}-${nextNumber.toString().padStart(4, "0")}`
   } catch (error) {
-    console.error("Error generating request ID:", error)
-    // Fallback ID generation
-    const timestamp = Date.now()
-    const random = Math.floor(Math.random() * 1000)
-    return `REQ-${timestamp}-${random}`
+    console.error("Error generating request ID, using fallback:", error)
+    return fallbackId
   }
 }
 
-// User management functions with better error handling
+// User management functions with direct table operations instead of RPC
 export async function getOrCreateUser(
   email: string,
   name: string,
   role: User["role"] = "Requester",
 ): Promise<User | null> {
+  if (!isSupabaseConfigured) {
+    console.warn("Supabase not configured")
+    return null
+  }
+
   try {
+    console.log("Attempting to get or create user:", { email, name, role })
+
     // First try to get existing user
     const { data: existingUser, error: getUserError } = await supabaseAdmin
       .from("users")
@@ -144,16 +191,17 @@ export async function getOrCreateUser(
       .single()
 
     if (existingUser && !getUserError) {
+      console.log("Found existing user:", existingUser)
       return existingUser
     }
+
+    console.log("User not found, creating new user")
 
     // If user doesn't exist, create new one
     const newUser = {
       email,
       name: name || email.split("@")[0],
       role,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     }
 
     const { data: createdUser, error: createError } = await supabaseAdmin
@@ -167,6 +215,7 @@ export async function getOrCreateUser(
       return null
     }
 
+    console.log("Successfully created user:", createdUser)
     return createdUser
   } catch (error) {
     console.error("Error in getOrCreateUser:", error)
@@ -175,6 +224,11 @@ export async function getOrCreateUser(
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
+  if (!isSupabaseConfigured) {
+    console.warn("Supabase not configured")
+    return null
+  }
+
   try {
     const { data, error } = await supabaseAdmin.from("users").select("*").eq("email", email).single()
 
@@ -207,21 +261,45 @@ export function generateApiKey(userEmail: string): string {
 }
 
 export async function validateApiKey(apiKey: string) {
+  if (!isSupabaseConfigured) {
+    console.warn("Supabase not configured")
+    return null
+  }
+
   try {
     const keyHash = hashApiKey(apiKey)
 
-    // Try RPC function first
-    const { data, error } = await supabaseAdmin.rpc("validate_api_key", {
-      p_key_hash: keyHash,
-    })
+    // Direct table join instead of RPC
+    const { data, error } = await supabaseAdmin
+      .from("api_keys")
+      .select(`
+        user_id,
+        users!inner(
+          id,
+          email,
+          name,
+          role
+        )
+      `)
+      .eq("key_hash", keyHash)
+      .eq("is_active", true)
+      .single()
 
-    if (error || !data || data.length === 0) {
+    if (error || !data) {
       console.error("API key validation failed:", error)
       return null
     }
 
-    const { user_id, email, name, role } = data[0]
-    return { user_id, email, name, role }
+    // Update last_used_at
+    await supabaseAdmin.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("key_hash", keyHash)
+
+    const user = data.users as any
+    return {
+      user_id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    }
   } catch (error) {
     console.error("Error validating API key:", error)
     return null
@@ -229,6 +307,11 @@ export async function validateApiKey(apiKey: string) {
 }
 
 export async function getUserApiKeys(userId: string): Promise<ApiKey[]> {
+  if (!isSupabaseConfigured) {
+    console.warn("Supabase not configured")
+    return []
+  }
+
   try {
     const { data, error } = await supabaseAdmin
       .from("api_keys")
@@ -250,6 +333,11 @@ export async function getUserApiKeys(userId: string): Promise<ApiKey[]> {
 }
 
 export async function revokeApiKey(keyId: string): Promise<boolean> {
+  if (!isSupabaseConfigured) {
+    console.warn("Supabase not configured")
+    return false
+  }
+
   try {
     const { error } = await supabaseAdmin.from("api_keys").update({ is_active: false }).eq("id", keyId)
 
@@ -265,48 +353,43 @@ export async function revokeApiKey(keyId: string): Promise<boolean> {
   }
 }
 
-// Statistics functions
+// Statistics functions with direct table queries
 export async function getRequestStats() {
+  if (!isSupabaseConfigured) {
+    console.warn("Supabase not configured")
+    return {
+      total: 0,
+      pending: 0,
+      in_progress: 0,
+      completed: 0,
+      cancelled: 0,
+    }
+  }
+
   try {
-    // Try RPC function first
-    const { data, error } = await supabaseAdmin.rpc("get_request_stats")
+    // Direct query instead of RPC
+    const { data: requests, error } = await supabaseAdmin.from("component_requests").select("status")
 
     if (error) {
-      console.error("RPC error, calculating stats manually:", error)
-      // Fallback: calculate stats manually
-      const { data: requests, error: requestsError } = await supabaseAdmin.from("component_requests").select("status")
-
-      if (requestsError) {
-        console.error("Error fetching requests for stats:", requestsError)
-        return {
-          total: 0,
-          pending: 0,
-          in_progress: 0,
-          completed: 0,
-          cancelled: 0,
-        }
-      }
-
-      const stats = {
-        total: requests?.length || 0,
-        pending: requests?.filter((r) => r.status === "Pending").length || 0,
-        in_progress: requests?.filter((r) => r.status === "In Progress").length || 0,
-        completed: requests?.filter((r) => r.status === "Completed").length || 0,
-        cancelled: requests?.filter((r) => r.status === "Cancelled").length || 0,
-      }
-
-      return stats
-    }
-
-    return (
-      data || {
+      console.error("Error fetching requests for stats:", error)
+      return {
         total: 0,
         pending: 0,
         in_progress: 0,
         completed: 0,
         cancelled: 0,
       }
-    )
+    }
+
+    const stats = {
+      total: requests?.length || 0,
+      pending: requests?.filter((r) => r.status === "Pending").length || 0,
+      in_progress: requests?.filter((r) => r.status === "In Progress").length || 0,
+      completed: requests?.filter((r) => r.status === "Completed").length || 0,
+      cancelled: requests?.filter((r) => r.status === "Cancelled").length || 0,
+    }
+
+    return stats
   } catch (error) {
     console.error("Error in getRequestStats:", error)
     return {
