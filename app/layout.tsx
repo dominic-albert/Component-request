@@ -8,8 +8,8 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "CRs - Component Request System",
-  description: "Manage and track component requests for your design system",
+  title: "CRs",
+  description: "Component Request System",
     generator: 'v0.dev'
 }
 
@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
           {children}

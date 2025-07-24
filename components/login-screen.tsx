@@ -1,127 +1,129 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Loader2, User, Shield } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { toast } from "@/hooks/use-toast"
 
 interface LoginScreenProps {
-  onLogin: (user: { email: string; role: string }) => void
+  onLogin: (user: { name: string; email: string; role: string }) => void
 }
 
 const users = [
   { name: "Sarah Chen", email: "sarah.chen@company.com", role: "Designer" },
-  { name: "Mike Johnson", email: "mike.johnson@company.com", role: "Developer" },
-  { name: "Emily Davis", email: "emily.davis@company.com", role: "Product Manager" },
+  { name: "Mike Johnson", email: "mike.johnson@company.com", role: "Product Manager" },
+  { name: "Emily Davis", email: "emily.davis@company.com", role: "Developer" },
   { name: "Alex Rodriguez", email: "alex.rodriguez@company.com", role: "Designer" },
-  { name: "Jessica Kim", email: "jessica.kim@company.com", role: "Developer" },
+  { name: "Jessica Kim", email: "jessica.kim@company.com", role: "Product Manager" },
 ]
 
-const roles = ["Admin", "Developer", "Designer", "Product Manager", "Requester"]
+const roles = ["Designer", "Developer", "Product Manager", "QA Engineer", "Admin"]
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [selectedUser, setSelectedUser] = useState("")
   const [selectedRole, setSelectedRole] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isDebugging, setIsDebugging] = useState(false)
 
-  // Load saved preferences on mount
-  useEffect(() => {
-    const savedUser = localStorage.getItem("selectedUser")
-    const savedRole = localStorage.getItem("selectedRole")
-    const savedRemember = localStorage.getItem("rememberMe") === "true"
-
-    if (savedRemember && savedUser && savedRole) {
-      setSelectedUser(savedUser)
-      setSelectedRole(savedRole)
-      setRememberMe(true)
-      console.log("Loaded saved preferences:", { savedUser, savedRole })
-    }
-  }, [])
-
-  const handleUserSelect = (userEmail: string) => {
-    console.log("User selected:", userEmail)
-    setSelectedUser(userEmail)
-
-    // Auto-select role based on user
-    const user = users.find((u) => u.email === userEmail)
-    if (user) {
-      setSelectedRole(user.role)
-      console.log("Auto-selected role:", user.role)
-    }
-  }
-
-  const handleRoleSelect = (role: string) => {
-    console.log("Role selected:", role)
-    setSelectedRole(role)
-  }
-
-  const handleLogin = async () => {
+  const handleLogin = () => {
     if (!selectedUser || !selectedRole) {
-      console.log("Login attempted without complete selection")
+      toast({
+        title: "Missing Information",
+        description: "Please select both a user and a role.",
+        variant: "destructive",
+      })
       return
     }
 
-    setIsLoading(true)
-    console.log("Starting login process...")
-
-    // Save preferences if remember me is checked
-    if (rememberMe) {
-      localStorage.setItem("selectedUser", selectedUser)
-      localStorage.setItem("selectedRole", selectedRole)
-      localStorage.setItem("rememberMe", "true")
-      console.log("Saved login preferences")
-    } else {
-      localStorage.removeItem("selectedUser")
-      localStorage.removeItem("selectedRole")
-      localStorage.removeItem("rememberMe")
-      console.log("Cleared login preferences")
+    const user = users.find((u) => u.name === selectedUser)
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "Selected user not found.",
+        variant: "destructive",
+      })
+      return
     }
 
-    // Simulate login delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    const loginData = {
+      name: user.name,
+      email: user.email,
+      role: selectedRole,
+    }
 
-    console.log("Login successful:", { email: selectedUser, role: selectedRole })
-    onLogin({ email: selectedUser, role: selectedRole })
-    setIsLoading(false)
+    console.log("Login attempt:", loginData)
+
+    if (rememberMe) {
+      localStorage.setItem("rememberedLogin", JSON.stringify(loginData))
+      console.log("Login saved to localStorage")
+    }
+
+    toast({
+      title: "Login Successful",
+      description: `Welcome back, ${user.name}!`,
+    })
+
+    onLogin(loginData)
   }
 
-  const selectedUserData = users.find((u) => u.email === selectedUser)
+  const debugSupabase = async () => {
+    setIsDebugging(true)
+    try {
+      console.log("Starting Supabase debug...")
+      const response = await fetch("/api/debug/supabase")
+      const result = await response.json()
+
+      console.log("Supabase debug result:", result)
+
+      if (result.success) {
+        toast({
+          title: "Supabase Connection ✅",
+          description: "Database connection is working properly",
+        })
+      } else {
+        toast({
+          title: "Supabase Connection ❌",
+          description: result.error || "Connection failed",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Debug failed:", error)
+      toast({
+        title: "Debug Failed",
+        description: "Could not test Supabase connection",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDebugging(false)
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl shadow-blue-500/20">
-        <CardHeader className="text-center pb-6">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/25">
-            <User className="h-8 w-8 text-white" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-white">Welcome to CRs</CardTitle>
-          <CardDescription className="text-slate-300">
-            Component Request System - Select your profile to continue
-          </CardDescription>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">CRs</CardTitle>
+          <CardDescription>Component Request System</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="user-select" className="text-sm font-medium text-slate-300">
-              Select User
-            </Label>
-            <Select value={selectedUser} onValueChange={handleUserSelect}>
-              <SelectTrigger className="w-full bg-white/5 border-white/20 text-white [&>span]:text-white">
+            <label className="text-sm font-medium">Select User</label>
+            <Select value={selectedUser} onValueChange={setSelectedUser}>
+              <SelectTrigger>
                 <SelectValue placeholder="Choose a user..." />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800/90 backdrop-blur-md border-white/20">
+              <SelectContent>
                 {users.map((user) => (
-                  <SelectItem
-                    key={user.email}
-                    value={user.email}
-                    className="text-white hover:bg-white/10 focus:bg-white/10"
-                  >
-                    <div className="flex flex-col">
-                      <span className="font-medium">{user.name}</span>
-                      <span className="text-xs text-slate-400">{user.email}</span>
+                  <SelectItem key={user.email} value={user.name}>
+                    <div className="flex items-center justify-between w-full">
+                      <span>{user.name}</span>
+                      <Badge variant="secondary" className="ml-2">
+                        {user.role}
+                      </Badge>
                     </div>
                   </SelectItem>
                 ))}
@@ -130,66 +132,43 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role-select" className="text-sm font-medium text-slate-300">
-              Select Role
-            </Label>
-            <Select value={selectedRole} onValueChange={handleRoleSelect}>
-              <SelectTrigger className="w-full bg-white/5 border-white/20 text-white [&>span]:text-white">
-                <SelectValue placeholder="Choose a role..." />
+            <label className="text-sm font-medium">Select Role</label>
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose your role..." />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800/90 backdrop-blur-md border-white/20">
+              <SelectContent>
                 {roles.map((role) => (
-                  <SelectItem key={role} value={role} className="text-white hover:bg-white/10 focus:bg-white/10">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      {role}
-                    </div>
+                  <SelectItem key={role} value={role}>
+                    {role}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {selectedUser && selectedRole && (
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center">
-                  <User className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-white font-medium">{selectedUserData?.name}</p>
-                  <p className="text-blue-300 text-sm">{selectedRole}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="flex items-center space-x-2">
-            <Checkbox
-              id="remember"
-              checked={rememberMe}
-              onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-              className="border-white/20 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-            />
-            <Label htmlFor="remember" className="text-sm text-slate-300 cursor-pointer">
-              Remember my selection
-            </Label>
+            <Checkbox id="remember" checked={rememberMe} onCheckedChange={setRememberMe} />
+            <label htmlFor="remember" className="text-sm">
+              Remember me
+            </label>
           </div>
 
-          <Button
-            onClick={handleLogin}
-            disabled={!selectedUser || !selectedRole || isLoading}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 rounded-lg font-medium shadow-lg shadow-blue-500/25 transition-all duration-200 hover:shadow-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Signing in...
-              </div>
-            ) : (
-              "Sign In"
-            )}
+          <Button onClick={handleLogin} className="w-full" disabled={!selectedUser || !selectedRole}>
+            Access Dashboard
           </Button>
+
+          <div className="pt-4 border-t">
+            <Button onClick={debugSupabase} variant="outline" className="w-full bg-transparent" disabled={isDebugging}>
+              {isDebugging ? "Testing Connection..." : "🔧 Debug Supabase"}
+            </Button>
+          </div>
+
+          {selectedUser && (
+            <div className="text-xs text-gray-500 text-center">
+              Selected: {selectedUser} ({selectedRole})
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
