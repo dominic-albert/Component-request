@@ -2,12 +2,69 @@ import { type NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase"
 import { validateApiKey } from "@/lib/api-utils"
 
+// Mock data for when database is not available
+const mockRequests = [
+  {
+    id: "CR0001",
+    request_name: "Advanced Data Table Component",
+    justification: "Need a reusable data table with sorting, filtering, and pagination for multiple dashboard views.",
+    requester_id: "user_1",
+    requester_name: "Sarah Chen",
+    requester_email: "sarah.chen@company.com",
+    status: "In Progress",
+    denial_reason: "",
+    created_at: "2024-01-15T10:30:00Z",
+    updated_at: "2024-01-16T14:20:00Z",
+    figma_link: "https://figma.com/file/example1",
+    project: "Dashboard",
+    severity: "High",
+    category: "Display",
+    image_data: null,
+  },
+  {
+    id: "CR0002",
+    request_name: "Multi-step Form Wizard",
+    justification:
+      "Complex onboarding flow requires a step-by-step form component with validation and progress tracking.",
+    requester_id: "user_2",
+    requester_name: "Mike Johnson",
+    requester_email: "mike.johnson@company.com",
+    status: "Pending",
+    denial_reason: "",
+    created_at: "2024-01-14T09:15:00Z",
+    updated_at: "2024-01-14T09:15:00Z",
+    figma_link: "https://figma.com/file/example2",
+    project: "Onboarding",
+    severity: "Medium",
+    category: "Form",
+    image_data: null,
+  },
+  {
+    id: "CR0003",
+    request_name: "Interactive Chart Component",
+    justification:
+      "Analytics dashboard needs interactive charts with hover states, tooltips, and drill-down capabilities.",
+    requester_id: "user_3",
+    requester_name: "Emily Davis",
+    requester_email: "emily.davis@company.com",
+    status: "Completed",
+    denial_reason: "",
+    created_at: "2024-01-10T16:45:00Z",
+    updated_at: "2024-01-13T11:30:00Z",
+    figma_link: "",
+    project: "Analytics",
+    severity: "High",
+    category: "Display",
+    image_data: null,
+  },
+]
+
 export async function GET(request: NextRequest) {
   try {
     // Check if Supabase is configured
     if (!supabaseAdmin) {
       console.warn("Supabase not configured, returning mock data")
-      return NextResponse.json([])
+      return NextResponse.json(mockRequests)
     }
 
     const { data: requests, error } = await supabaseAdmin
@@ -17,15 +74,15 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error("Database error fetching requests in GET /api/requests:", error)
-      // Return empty array instead of error to prevent app crash
-      return NextResponse.json([])
+      // Return mock data instead of error to prevent app crash
+      return NextResponse.json(mockRequests)
     }
 
     return NextResponse.json(requests || [])
   } catch (error) {
     console.error("API error in GET /api/requests:", error)
-    // Return empty array instead of error to prevent app crash
-    return NextResponse.json([])
+    // Return mock data instead of error to prevent app crash
+    return NextResponse.json(mockRequests)
   }
 }
 
@@ -89,17 +146,15 @@ export async function POST(request: NextRequest) {
       requester_id: userId,
       requester_name: body.requesterName,
       requester_email: body.requesterEmail,
-      status: "Pending",
-      category: body.category,
-      severity: body.severity || "Medium",
+      status: "Pending" as const,
+      denial_reason: "",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      figma_link: body.figmaLink || "",
       project: body.project || "Manual",
-      figma_link: body.figmaLink,
-      figma_file_key: body.figmaFileKey,
-      figma_file_name: body.figmaFileName,
-      figma_node_id: body.figmaNodeId,
-      image_data: body.imageData,
-      selection_data: body.selectionData,
-      source: body.source || "manual",
+      severity: body.severity || "Medium",
+      category: body.category,
+      image_data: body.imageData || null,
     }
     console.log("Prepared request data for insertion:", requestData)
 

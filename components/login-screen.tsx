@@ -1,109 +1,91 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { User, Settings } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { User, Shield, Users } from "lucide-react"
 
 interface LoginScreenProps {
   onLogin: (user: { email: string; role: string }) => void
 }
 
+const mockUsers = [
+  { name: "Sarah Chen", email: "sarah.chen@company.com", role: "Designer" },
+  { name: "Mike Johnson", email: "mike.johnson@company.com", role: "Developer" },
+  { name: "Emily Davis", email: "emily.davis@company.com", role: "Product Manager" },
+  { name: "Alex Rodriguez", email: "alex.rodriguez@company.com", role: "Admin" },
+  { name: "Jessica Kim", email: "jessica.kim@company.com", role: "Designer" },
+]
+
+const roles = [
+  { value: "Admin", label: "Admin", icon: Shield },
+  { value: "Developer", label: "Developer", icon: User },
+  { value: "Designer", label: "Designer", icon: Users },
+  { value: "Product Manager", label: "Product Manager", icon: User },
+]
+
 export function LoginScreen({ onLogin }: LoginScreenProps) {
-  const [selectedUser, setSelectedUser] = useState<string>("")
-  const [selectedRole, setSelectedRole] = useState<string>("Requester")
-  const [saveSelection, setSaveSelection] = useState<boolean>(false)
-
-  // Load saved preferences on component mount
-  useEffect(() => {
-    const savedUser = localStorage.getItem("savedUser")
-    const savedRole = localStorage.getItem("savedRole")
-
-    if (savedUser) {
-      setSelectedUser(savedUser)
-      console.log("Loaded saved user:", savedUser)
-    }
-    if (savedRole) {
-      setSelectedRole(savedRole)
-      console.log("Loaded saved role:", savedRole)
-    }
-  }, [])
-
-  const handleUserChange = (value: string) => {
-    console.log("User selected:", value)
-    setSelectedUser(value)
-  }
-
-  const handleRoleChange = (value: string) => {
-    console.log("Role selected:", value)
-    setSelectedRole(value)
-  }
+  const [selectedUser, setSelectedUser] = useState("")
+  const [selectedRole, setSelectedRole] = useState("")
+  const [rememberMe, setRememberMe] = useState(false)
 
   const handleLogin = () => {
-    if (!selectedUser) {
-      console.error("No user selected")
-      return
-    }
+    if (!selectedUser || !selectedRole) return
 
-    // Save preferences if requested
-    if (saveSelection) {
-      localStorage.setItem("savedUser", selectedUser)
-      localStorage.setItem("savedRole", selectedRole)
-      console.log("Saved preferences:", { user: selectedUser, role: selectedRole })
-    } else {
-      // Clear saved preferences if not saving
-      localStorage.removeItem("savedUser")
-      localStorage.removeItem("savedRole")
-    }
+    const user = mockUsers.find((u) => u.email === selectedUser)
+    if (!user) return
 
-    // Create user object with email format
-    const userEmail = `${selectedUser.toLowerCase().replace(" ", "")}@company.com`
-
-    onLogin({
-      email: userEmail,
+    const loginData = {
+      email: user.email,
       role: selectedRole,
-    })
+    }
+
+    console.log("Login attempt:", loginData)
+
+    if (rememberMe) {
+      localStorage.setItem("rememberedUser", JSON.stringify(loginData))
+    }
+
+    onLogin(loginData)
   }
 
-  const userOptions = [
-    "Name 1",
-    "Name 2",
-    "Name 3",
-    "Name 4",
-    "Name 5",
-    "Name 6",
-    "Name 7",
-    "Name 8",
-    "Name 9",
-    "Name 10",
-  ]
+  const isFormValid = selectedUser && selectedRole
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white shadow-xl border-0">
-        <CardHeader className="text-center pb-6">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="h-8 w-8 text-blue-600" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl">
+        <CardHeader className="text-center space-y-2">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <User className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">Welcome</CardTitle>
-          <CardDescription className="text-gray-600">Select your name and role to access the dashboard</CardDescription>
+          <CardTitle className="text-2xl font-bold text-white">Welcome to CRs</CardTitle>
+          <CardDescription className="text-slate-300">
+            Component Request System - Select your profile to continue
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="user-select" className="text-sm font-medium text-gray-700">
-              Select Your Name
+            <Label htmlFor="user-select" className="text-sm font-medium text-slate-300">
+              Select User
             </Label>
-            <Select value={selectedUser} onValueChange={handleUserChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choose your name..." />
+            <Select value={selectedUser} onValueChange={setSelectedUser}>
+              <SelectTrigger className="w-full bg-white/5 border-white/20 text-white">
+                <SelectValue placeholder="Choose a user..." />
               </SelectTrigger>
-              <SelectContent>
-                {userOptions.map((name) => (
-                  <SelectItem key={name} value={name}>
-                    {name}
+              <SelectContent className="bg-slate-800 border-white/20">
+                {mockUsers.map((user) => (
+                  <SelectItem
+                    key={user.email}
+                    value={user.email}
+                    className="text-white hover:bg-white/10 focus:bg-white/10"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium">{user.name}</span>
+                      <span className="text-xs text-slate-400">{user.email}</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -111,47 +93,56 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role-select" className="text-sm font-medium text-gray-700">
-              Select Your Role
+            <Label htmlFor="role-select" className="text-sm font-medium text-slate-300">
+              Select Role
             </Label>
-            <Select value={selectedRole} onValueChange={handleRoleChange}>
-              <SelectTrigger className="w-full">
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <SelectTrigger className="w-full bg-white/5 border-white/20 text-white">
                 <SelectValue placeholder="Choose your role..." />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Requester">Requester</SelectItem>
-                <SelectItem value="Creator">Creator</SelectItem>
+              <SelectContent className="bg-slate-800 border-white/20">
+                {roles.map((role) => {
+                  const IconComponent = role.icon
+                  return (
+                    <SelectItem
+                      key={role.value}
+                      value={role.value}
+                      className="text-white hover:bg-white/10 focus:bg-white/10"
+                    >
+                      <div className="flex items-center gap-2">
+                        <IconComponent className="h-4 w-4" />
+                        <span>{role.label}</span>
+                      </div>
+                    </SelectItem>
+                  )
+                })}
               </SelectContent>
             </Select>
           </div>
 
           <div className="flex items-center space-x-2">
             <Checkbox
-              id="save-selection"
-              checked={saveSelection}
-              onCheckedChange={(checked) => setSaveSelection(checked as boolean)}
+              id="remember"
+              checked={rememberMe}
+              onCheckedChange={setRememberMe}
+              className="border-white/20 data-[state=checked]:bg-blue-600"
             />
-            <Label htmlFor="save-selection" className="text-sm text-gray-600 cursor-pointer">
-              Save this selection for next login
+            <Label htmlFor="remember" className="text-sm text-slate-300 cursor-pointer">
+              Remember my selection
             </Label>
           </div>
 
-          {selectedUser && (
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm text-blue-800">
-                <strong>Selected:</strong> {selectedUser} ({selectedRole})
-              </p>
-            </div>
-          )}
-
           <Button
             onClick={handleLogin}
-            disabled={!selectedUser}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 font-medium transition-colors duration-200"
+            disabled={!isFormValid}
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium py-3 rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Settings className="mr-2 h-4 w-4" />
             Access Dashboard
           </Button>
+
+          <div className="text-center">
+            <p className="text-xs text-slate-400">Demo system - Select any user and role combination</p>
+          </div>
         </CardContent>
       </Card>
     </div>

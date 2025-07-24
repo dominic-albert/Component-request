@@ -8,8 +8,8 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Component Request System",
-  description: "A system for managing component requests from design teams",
+  title: "CRs - Component Request System",
+  description: "Component Request System for managing design team requests",
     generator: 'v0.dev'
 }
 
