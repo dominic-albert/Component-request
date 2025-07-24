@@ -20,7 +20,9 @@ export default function Home() {
     const storedUser = sessionStorage.getItem("currentUser")
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser))
+        const parsedUser = JSON.parse(storedUser)
+        console.log("Loaded user from session:", parsedUser)
+        setUser(parsedUser)
       } catch (e) {
         console.error("Failed to parse user from session storage", e)
         sessionStorage.removeItem("currentUser")
@@ -30,11 +32,13 @@ export default function Home() {
   }, [])
 
   const handleLogin = (loggedInUser: UserInfo) => {
+    console.log("User logged in:", loggedInUser)
     setUser(loggedInUser)
     sessionStorage.setItem("currentUser", JSON.stringify(loggedInUser))
   }
 
   const handleLogout = () => {
+    console.log("User logged out")
     setUser(null)
     sessionStorage.removeItem("currentUser")
   }

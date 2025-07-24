@@ -28,10 +28,10 @@ const USER_OPTIONS = [
 ]
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
-  const [selectedUser, setSelectedUser] = useState("")
-  const [role, setRole] = useState("Requester")
-  const [saveForNext, setSaveForNext] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<string>("")
+  const [role, setRole] = useState<string>("Requester")
+  const [saveForNext, setSaveForNext] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
   const { toast } = useToast()
 
   // Load saved preferences on component mount
@@ -87,6 +87,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
         role: role,
       }
 
+      console.log("Logging in user:", userData)
       onLogin(userData)
 
       toast({
@@ -103,6 +104,16 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleUserChange = (value: string) => {
+    console.log("User selected:", value)
+    setSelectedUser(value)
+  }
+
+  const handleRoleChange = (value: string) => {
+    console.log("Role selected:", value)
+    setRole(value)
   }
 
   return (
@@ -123,7 +134,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               <Label htmlFor="user" className="text-sm font-medium text-gray-700">
                 Select User *
               </Label>
-              <Select value={selectedUser} onValueChange={setSelectedUser}>
+              <Select value={selectedUser} onValueChange={handleUserChange}>
                 <SelectTrigger className="w-full px-4 py-3 border border-gray-300 rounded-lg mt-1">
                   <SelectValue placeholder="Choose your name" />
                 </SelectTrigger>
@@ -141,7 +152,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               <Label htmlFor="role" className="text-sm font-medium text-gray-700">
                 Login as *
               </Label>
-              <Select value={role} onValueChange={setRole}>
+              <Select value={role} onValueChange={handleRoleChange}>
                 <SelectTrigger className="w-full px-4 py-3 border border-gray-300 rounded-lg mt-1">
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
@@ -189,6 +200,11 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 ? "Your selection will be remembered"
                 : "Quick access - no password required"}
             </p>
+            {selectedUser && (
+              <p className="text-xs text-blue-600 mt-1">
+                Selected: {USER_OPTIONS.find((u) => u.value === selectedUser)?.label}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
